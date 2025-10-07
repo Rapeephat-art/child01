@@ -220,7 +220,7 @@ a:hover { color: #3f8fce; }
 /* Radio คะแนนให้เด้งสดใสขึ้น */
 .score-radio input[type="radio"]{
   accent-color: var(--cc-primary);
-  box-shadow: 0 0 0 2px #d4d8dd;
+  box-shadow: 0 0 0 2px #153152;
 }
 .score-radio label:hover span{ transform: translateY(-1px); }
 .score-radio span{ transition: transform .1s ease; }
