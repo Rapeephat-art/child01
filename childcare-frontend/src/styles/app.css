@@ -1,0 +1,236 @@
+/* src/styles/app.css */
+
+/* ---------- Theme tokens (พาสเทล) ---------- */
+:root{
+  --cc-bg:        #f7f9fc;      /* พื้นหลังนวล */
+  --cc-surface:   #ffffff;      /* พื้นผิวการ์ด */
+  --cc-primary:   #5aa9e6;      /* ฟ้าอ่อน */
+  --cc-primary-2: #97d2fb;      /* ฟ้าอ่อนรอง */
+  --cc-accent:    #f78fb3;      /* ชมพูพาสเทล */
+  --cc-success:   #8bd3a8;      /* เขียวพาสเทล */
+  --cc-warning:   #ffd166;      /* เหลืองพาสเทล */
+  --cc-text:      #2b2d42;      /* สีตัวหนังสือหลัก */
+  --cc-muted:     #6c757d;      /* สีตัวหนังสือรอง */
+  --cc-radius:    16px;         /* ความโค้งมน */
+  --cc-shadow:    0 10px 20px rgba(0,0,0,.06);
+}
+
+/* ---------- Global ---------- */
+html, body{
+  background: var(--cc-bg);
+  color: var(--cc-text);
+  font-family: "Noto Sans Thai", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+}
+
+a { color: var(--cc-primary); }
+a:hover { color: #3f8fce; }
+
+/* ปุ่ม primary ปรับโทนพาสเทล */
+.btn-primary{
+  background: linear-gradient(135deg, var(--cc-primary), var(--cc-primary-2));
+  border: none;
+  box-shadow: var(--cc-shadow);
+}
+.btn-primary:hover{
+  filter: brightness(0.95);
+}
+
+/* การ์ด */
+.card{
+  border: 0;
+  border-radius: var(--cc-radius);
+  box-shadow: var(--cc-shadow);
+}
+.card-hover{ transition: transform .15s ease, box-shadow .15s ease; }
+.card-hover:hover{ transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.08); }
+
+/* ---------- Navbar น่ารัก ๆ ---------- */
+.navbar{
+  border-bottom: 0;
+  background: linear-gradient(135deg, #ffffff, #ecf6ff) !important;
+  box-shadow: var(--cc-shadow);
+}
+.navbar .navbar-brand{
+  font-weight: 700;
+  color: var(--cc-primary) !important;
+  display: inline-flex; align-items: center; gap:.5rem;
+}
+.badge-dot{
+  display:inline-block; width:10px; height:10px; border-radius:50%; background: var(--cc-accent);
+}
+
+/* เมนู active */
+.navbar .nav-link{
+  color: #4e5562 !important;
+  font-weight: 600;
+}
+.navbar .nav-link.active, .navbar .nav-link:hover{
+  color: var(--cc-primary) !important;
+}
+
+/* ---------- Sections ---------- */
+.section-hero{
+  background: linear-gradient(180deg, #ecf6ff 0%, rgba(236,246,255,0) 100%);
+  border-radius: calc(var(--cc-radius)*1.2);
+  padding: 1.5rem;
+}
+
+/* ฟอร์ม Login */
+.auth-card{
+  background: var(--cc-surface);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: var(--cc-shadow);
+}
+.form-label{ font-weight: 600; }
+
+/* ชิป/ป้ายเล็ก ๆ */
+.chip{
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:#fff; border-radius:999px; padding:.4rem .75rem;
+  box-shadow: var(--cc-shadow); color: var(--cc-muted); font-weight:600;
+}
+.chip i{ color: var(--cc-accent); }
+
+/* ตารางให้ขอบนุ่ม ๆ */
+.table{
+  background: var(--cc-surface);
+  border-radius: var(--cc-radius);
+  overflow: hidden;
+  box-shadow: var(--cc-shadow);
+}
+.table thead th{
+  background: #f0f7ff;
+  border-bottom: none;
+  color:#3f4b5b;
+  font-weight:700;
+}
+
+.navbar .navbar-brand img{
+  box-shadow: var(--cc-shadow);
+  border-radius: 10px; /* โค้งมน */
+}
+.brand-logo{
+  height: 48px;   /* ปรับ 44–56 ได้ตามชอบ */
+  width: 48px;
+  object-fit: cover;
+  border-radius: 12px;
+  padding: 2px;
+  background: #fff;
+  box-shadow: var(--cc-shadow);
+}
+.brand-text{
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--cc-primary);
+  line-height: 1;
+}
+
+@media (max-width: 576px){
+  .brand-logo{ height: 40px; width: 40px; }  /* ย่อบนมือถือ */
+}
+
+/* ปรับขนาด radio และเว้นระยะให้เหมือนตัวอย่าง */
+.score-radio input[type="radio"] {
+  width: 18px;
+  height: 18px;
+}
+.score-radio span {
+  font-size: 1rem; /* ตัวเลขชัดกำลังดี */
+}
+
+/* =========================================================
+   THEME PACK: สดใสหลายโทน (Blue/Pink/Mint/Sun)
+   วิธีใช้: <html class="theme-blue"> หรือ theme-pink / theme-mint / theme-sun
+   ========================================================= */
+
+/* โทนเริ่มต้น (Blue) — ใช้ชุดตัวแปรเดิมของคุณ */
+.theme-blue:root{
+  --cc-primary:   #4fa3ff;
+  --cc-primary-2: #8fc7ff;
+  --cc-accent:    #ff92c2;
+  --cc-success:   #62d7a1;
+  --cc-warning:   #ffd36a;
+}
+
+/* โทนชมพู (Pink Candy) */
+.theme-pink:root{
+  --cc-primary:   #ff7bb7;
+  --cc-primary-2: #ffb2d4;
+  --cc-accent:    #8ec5ff;
+  --cc-success:   #8dd9a6;
+  --cc-warning:   #ffd683;
+  --cc-bg:        #fff7fb;
+}
+
+/* โทนมิ้นต์ (Mint Breeze) */
+.theme-mint:root{
+  --cc-primary:   #30d5c8;
+  --cc-primary-2: #7fe9df;
+  --cc-accent:    #ffa2c0;
+  --cc-success:   #68e0a5;
+  --cc-warning:   #ffe08a;
+  --cc-bg:        #f4fffc;
+}
+
+/* โทนสดใสเหลืองอ่อน (Sunny Day) */
+.theme-sun:root{
+  --cc-primary:   #ffb703;
+  --cc-primary-2: #ffd166;
+  --cc-accent:    #7db9ff;
+  --cc-success:   #8bd3a8;
+  --cc-warning:   #ffe28a;
+  --cc-bg:        #fffaf0;
+}
+
+/* ลวดลายพื้นหลังสนุก ๆ */
+.bg-dots{
+  background:
+    radial-gradient(12px 12px at 12px 12px, rgba(0,0,0,.04) 20%, transparent 22%) 0 0/48px 48px,
+    var(--cc-bg);
+}
+
+/* ส่วนหัวแบบลูกกวาด */
+.page-header-candy{
+  background: linear-gradient(135deg, var(--cc-primary-2), #fff);
+  border-radius: 18px;
+  padding: 1rem 1.25rem;
+  box-shadow: var(--cc-shadow);
+}
+
+/* ปุ่มลูกกวาด */
+.btn-candy{
+  border: 0 !important;
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--cc-primary), var(--cc-accent));
+  box-shadow: 0 10px 20px rgba(0,0,0,.08);
+}
+.btn-candy:hover{ filter: brightness(.97); }
+
+/* การ์ดเด้งนิด ๆ เวลา hover */
+.card-cute{ transition: transform .15s ease, box-shadow .15s ease; }
+.card-cute:hover{ transform: translateY(-3px); box-shadow: 0 16px 28px rgba(0,0,0,.10); }
+
+/* เส้นหัวตารางสีพาสเทล (ทับซ้ำให้สวยขึ้น) */
+.table thead th{
+  border-bottom: 0 !important;
+  background: linear-gradient(180deg, #f7fbff, #eef6ff);
+}
+
+/* Radio คะแนนให้เด้งสดใสขึ้น */
+.score-radio input[type="radio"]{
+  accent-color: var(--cc-primary);
+  box-shadow: 0 0 0 2px #e7eef9;
+}
+.score-radio label:hover span{ transform: translateY(-1px); }
+.score-radio span{ transition: transform .1s ease; }
+
+/* Badge หัวข้อ */
+.badge-soft{
+  background: #fff;
+  color: var(--cc-primary);
+  border: 2px solid #e8f1ff;
+  padding: .35rem .6rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
