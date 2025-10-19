@@ -1,91 +1,110 @@
 // src/controllers/health.controller.js
 import { pool } from '../config/db.js';
 
-/**
- * POST /api/health/records/bulk
- * body: { records: [{ child_id, hair, eyes, mouth, teeth, ears, nose, nails, skin }] }
- * - บันทึก recorded_at = NOW()
- * - ใส่ teacher_id จาก token
- */
-export async function saveBulk(req, res) {
+// ---------------------- รายชื่อเด็ก (สำหรับครู) ----------------------
+export async function listChildren(req, res) {
   try {
-    if (!Array.isArray(req.body?.records) || req.body.records.length === 0) {
-      return res.status(422).json({ message: 'records required' });
-    }
-    if (req.user?.type !== 'teacher') {
+    const me = req.user;
+    if (me?.type !== 'teacher') {
       return res.status(403).json({ message: 'เฉพาะครูเท่านั้น' });
     }
 
-    const teacherId = req.user.id;
-    const now = new Date(); // ใช้ NOW() ฝั่ง MySQL ก็ได้
-    const values = [];
+    // บางฐานข้อมูลเด็กเก่า center_id อาจเป็น NULL
+    // เงื่อนไขด้านล่างจะ "ไม่กรอง center" ถ้า teacher.center_id เป็น null/undefined
+    const centerId = me.center_id ?? null;
 
-    for (const r of req.body.records) {
-      if (!r?.child_id) continue;
+    const [rows] = await pool.query(
+      `
+      SELECT child_id, prefix, first_name, last_name, nickname, gender, birth_date
+      FROM children
+      WHERE status = 'อนุมัติ'
+        AND ( ? IS NULL OR center_id = ? )
+      ORDER BY first_name ASC, last_name ASC, child_id ASC
+      `,
+      [centerId, centerId]
+    );
 
-      const v = [
-        r.child_id,
-        teacherId,
-        r.weight_kg ?? null,
-        r.height_cm ?? null,
-        toScore(r.hair),
-        toScore(r.eyes),
-        toScore(r.mouth),
-        toScore(r.teeth),
-        toScore(r.ears),
-        toScore(r.nose),
-        toScore(r.nails),
-        toScore(r.skin),
-      ];
-      values.push(v);
+    return res.json(rows);
+  } catch (err) {
+    console.error('[HEALTH] listChildren error:', err);
+    return res.status(500).json({ message: 'โหลดรายชื่อเด็กไม่สำเร็จ' });
+  }
+}
+
+// ---------------------- บันทึกเป็นชุด ----------------------
+export async function saveBulk(req, res) {
+  const conn = await pool.getConnection();
+  try {
+    const me = req.user;
+    if (me?.type !== 'teacher') {
+      conn.release();
+      return res.status(403).json({ message: 'เฉพาะครูเท่านั้น' });
     }
 
-    if (values.length === 0) {
-      return res.status(422).json({ message: 'no valid rows' });
+    const {
+      semester,
+      academic_year,
+      records = [], // [{child_id, weight_kg, height_cm, temp_c, hair, eyes, mouth, teeth, ears, nose, nails, skin}]
+    } = req.body || {};
+
+    if (!semester || !academic_year) {
+      conn.release();
+      return res.status(422).json({ message: 'กรอกภาคเรียนและปีการศึกษา' });
+    }
+    if (!Array.isArray(records) || records.length === 0) {
+      conn.release();
+      return res.status(422).json({ message: 'ไม่มีข้อมูลบันทึก' });
     }
 
-    // บันทึกเป็นแถวใหม่ทั้งหมด (ตามที่หน้า UI ใช้อยู่ตอนนี้)
-    // ตาราง health_records:  child_id, teacher_id, weight_kg, height_cm, hair, eyes, mouth, teeth, ears, nose, nails, skin, recorded_at
-    const sql = `
-      INSERT INTO health_records
-        (child_id, teacher_id, weight_kg, height_cm,
-         hair, eyes, mouth, teeth, ears, nose, nails, skin, recorded_at)
-      VALUES ?
-    `;
+    await conn.beginTransaction();
 
-    await pool.query(sql, [values.map(v => [...v, now])]);
+    // ลบของเดิมรอบนั้น ๆ (ออปชัน)
+    const childIds = records.map(r => Number(r.child_id)).filter(Boolean);
+    if (childIds.length) {
+      await conn.query(
+        `DELETE FROM health_records
+         WHERE semester=? AND academic_year=? AND child_id IN (?)`,
+        [semester, academic_year, childIds]
+      );
+    }
 
-    return res.json({ ok: true, saved: values.length });
-  } catch (e) {
-    console.error('[health.saveBulk] error:', e);
+    // ใส่ของใหม่
+    const now = new Date();
+    const values = records.map(r => [
+      r.child_id,
+      me.id, // teacher_id
+      r.weight_kg ?? null,
+      r.height_cm ?? null,
+      r.temp_c ?? null,
+      r.hair ?? null,
+      r.eyes ?? null,
+      r.mouth ?? null,
+      r.teeth ?? null,
+      r.ears ?? null,
+      r.nose ?? null,
+      r.nails ?? null,
+      r.skin ?? null,
+      now,
+      semester,
+      academic_year,
+    ]);
+
+    await conn.query(
+      `INSERT INTO health_records
+       (child_id, teacher_id, weight_kg, height_cm, temp_c,
+        hair, eyes, mouth, teeth, ears, nose, nails, skin,
+        recorded_at, semester, academic_year)
+       VALUES ?`,
+      [values]
+    );
+
+    await conn.commit();
+    conn.release();
+    return res.json({ ok: true, message: 'บันทึกสำเร็จ' });
+  } catch (err) {
+    try { await conn.rollback(); } catch {}
+    conn.release();
+    console.error('[HEALTH] saveBulk error:', err);
     return res.status(500).json({ message: 'บันทึกไม่สำเร็จ' });
   }
 }
-
-// แปลงคะแนนให้เหลือ 1/2/3 หรือ null
-function toScore(x) {
-  if (x === null || x === undefined || x === '') return null;
-  const n = Number(x);
-  return [1, 2, 3].includes(n) ? n : null;
-}
-
-/* ตัวอย่าง endpoint สำหรับดึงย้อนหลังรายวัน (เผื่อใช้ต่อ)
-export async function listByDate(req, res) {
-  try {
-    const { date } = req.query; // YYYY-MM-DD
-    if (!date) return res.status(422).json({ message: 'date required' });
-
-    const [rows] = await pool.query(
-      `SELECT r.*, c.first_name, c.last_name, c.nickname
-         FROM health_records r
-         JOIN children c ON c.child_id = r.child_id
-        WHERE DATE(r.recorded_at) = ?`,
-      [date]
-    );
-    res.json(rows || []);
-  } catch (e) {
-    console.error('[health.listByDate] error:', e);
-    res.status(500).json({ message: 'โหลดข้อมูลไม่สำเร็จ' });
-  }
-}
-*/

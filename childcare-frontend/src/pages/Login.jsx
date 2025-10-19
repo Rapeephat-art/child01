@@ -102,8 +102,8 @@ export default function Login() {
 
           {/* บอกทิปเล็ก ๆ ช่วยดีบัก */}
           <div className="text-muted small mt-3">
-            ถ้าขึ้น 500 (Internal Server Error) ให้ดู log ที่ฝั่งแบ็กเอนด์ด้วย:
-            <code> LOGIN_ERROR: ...</code>
+           
+            <code> </code>
           </div>
         </div>
       </div>

@@ -1,78 +1,84 @@
-// src/pages/Health.jsx
+// src/pages/HealthMeasure.jsx
 import { useEffect, useState } from "react";
 import api from "../api/axios";
 
-function ScoreCell({ value, onChange, name }) {
+// ✅ แปลงวันที่เป็นปีไทย
+function formatDateToThai(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "";
+  const year = d.getFullYear() + 543;
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${day}/${month}/${year}`;
+}
+
+function ScoreCell({ value, onChange }) {
   return (
-    <div className="d-flex justify-content-center gap-4 score-radio">
-      {[1, 2, 3].map((n) => (
-        <label
-          key={n}
-          className="d-inline-flex align-items-center gap-2 mb-0"
-          style={{ cursor: "pointer" }}
-        >
-          <input
-            type="radio"
-            className="form-check-input m-0"
-            name={name}
-            value={n}
-            checked={String(value) === String(n)}
-            onChange={() => onChange(n)}
-          />
-          <span>{n}</span>
-        </label>
-      ))}
-    </div>
+    <select
+      className="form-select form-select-sm text-center fw-semibold square-select"
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+    >
+      <option value={1}>1</option>
+      <option value={2}>2</option>
+      <option value={3}>3</option>
+    </select>
   );
 }
 
-/** หัวข้อที่ให้คะแนน (ปรับเพิ่ม/ลดได้) */
 const FIELDS = [
-  { key: "hair",  label: "ผม" },
-  { key: "eyes",  label: "ตา" },
+  { key: "hair", label: "ผม" },
+  { key: "eyes", label: "ตา" },
   { key: "mouth", label: "ปาก" },
   { key: "teeth", label: "ฟัน" },
-  { key: "ears",  label: "หู" },
-  { key: "nose",  label: "จมูก" },
+  { key: "ears", label: "หู" },
+  { key: "nose", label: "จมูก" },
   { key: "nails", label: "เล็บ" },
-  { key: "skin",  label: "ผิวหนัง" },
+  { key: "skin", label: "ผิวหนัง" },
 ];
 
-export default function Health() {
+export default function HealthMeasure() {
   const [children, setChildren] = useState([]);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
-  // โหลดรายชื่อเด็ก
+  const [semester, setSemester] = useState(1);
+  const [academicYear, setAcademicYear] = useState("");
+  const [date, setDate] = useState("");
+  const [displayDate, setDisplayDate] = useState("");
+
+  const [search, setSearch] = useState(""); // ✅ ช่องค้นหา
+
+  // ✅ ตั้งค่าปีการศึกษาอัตโนมัติ
+  useEffect(() => {
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const buddhistYear = now.getFullYear() + 543;
+    const academic = month <= 4 ? buddhistYear - 1 : buddhistYear;
+
+    setAcademicYear(academic);
+    const iso = now.toISOString().slice(0, 10);
+    setDate(iso);
+    setDisplayDate(formatDateToThai(iso));
+  }, []);
+
   async function loadChildren() {
     try {
       setLoading(true);
-      setErr("");
-
       const { data } = await api.get("/children");
       const list = Array.isArray(data) ? data : [];
-
       setChildren(list);
       setRows(
-        list.map((c) => ({
-          child_id: c.child_id,
-          hair: null,
-          eyes: null,
-          mouth: null,
-          teeth: null,
-          ears: null,
-          nose: null,
-          nails: null,
-          skin: null,
-        }))
+        list.map((c) => {
+          const row = { child_id: c.child_id };
+          FIELDS.forEach((f) => (row[f.key] = 3));
+          return row;
+        })
       );
-    } catch (e) {
-      console.error(e);
-      setErr(e?.response?.data?.message || "โหลดรายชื่อเด็กไม่สำเร็จ");
-      setChildren([]);
-      setRows([]);
+    } catch {
+      setErr("โหลดรายชื่อเด็กไม่สำเร็จ");
     } finally {
       setLoading(false);
     }
@@ -91,36 +97,47 @@ export default function Health() {
   async function saveAll() {
     try {
       setSaving(true);
-      setErr("");
-
-      const payload = rows.map((r) => ({
-        child_id: r.child_id,
-        hair: r.hair ?? null,
-        eyes: r.eyes ?? null,
-        mouth: r.mouth ?? null,
-        teeth: r.teeth ?? null,
-        ears: r.ears ?? null,
-        nose: r.nose ?? null,
-        nails: r.nails ?? null,
-        skin: r.skin ?? null,
-      }));
-
-      await api.post("/health/records/bulk", { records: payload });
-      alert("บันทึกสำเร็จ");
-    } catch (e) {
-      console.error(e);
-      alert(e?.response?.data?.message || "บันทึกไม่สำเร็จ");
+      const payload = {
+        semester,
+        academic_year: academicYear,
+        date,
+        records: rows.map((r) => ({
+          child_id: r.child_id,
+          ...FIELDS.reduce((acc, f) => ({ ...acc, [f.key]: r[f.key] ?? 3 }), {}),
+        })),
+      };
+      await api.post("/health/records/bulk", payload);
+      alert("✅ บันทึกสำเร็จ");
+    } catch {
+      alert("❌ บันทึกไม่สำเร็จ");
     } finally {
       setSaving(false);
     }
   }
 
+  const handleDateChange = (e) => {
+    const iso = e.target.value;
+    setDate(iso);
+    setDisplayDate(formatDateToThai(iso));
+  };
+
+  // ✅ ฟังก์ชันกรองรายชื่อเด็กตามชื่อหรือนามสกุล
+  const filteredChildren = children.filter((c) => {
+    const term = search.toLowerCase();
+    return (
+      c.first_name?.toLowerCase().includes(term) ||
+      c.last_name?.toLowerCase().includes(term) ||
+      c.nickname?.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <div className="container py-4">
-      <div className="d-flex align-items-center justify-content-between mb-3">
+      {/* หัวข้อ */}
+      <div className="d-flex align-items-center justify-content-between mb-3 page-header-candy">
         <h4 className="mb-0">
-          <i className="bi bi-clipboard2-pulse me-2" />
-          บันทึก/ประเมินสุขภาพเด็ก
+          <i className="bi bi-heart-pulse me-2" />
+          บันทึก / ประเมินสุขภาพเด็ก
         </h4>
         <button
           className="btn btn-primary"
@@ -141,62 +158,104 @@ export default function Health() {
         </button>
       </div>
 
-      {err && <div className="alert alert-danger">{err}</div>}
+      {/* ส่วนปีการศึกษา + ช่องค้นหา */}
+      <div className="card mb-4 p-3 shadow-sm">
+        <div className="row g-3 align-items-end">
+          <div className="col-md-2">
+            <label className="form-label fw-semibold">เทอม</label>
+            <select
+              className="form-select"
+              value={semester}
+              onChange={(e) => setSemester(Number(e.target.value))}
+            >
+              <option value={1}>เทอม 1</option>
+              <option value={2}>เทอม 2</option>
+            </select>
+          </div>
 
-      <div className="card">
-        <div className="card-body">
-          {loading ? (
-            <div className="py-4 text-center">
-              <div className="spinner-border" role="status" />
-            </div>
-          ) : children.length === 0 ? (
-            <div className="text-muted">ไม่พบรายชื่อเด็ก</div>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-bordered align-middle">
-                <thead className="table-light">
-                  <tr>
-                    <th style={{ minWidth: 30 }} className="text-center">#</th>
-                    <th style={{ minWidth: 250 }}>ชื่อ-สกุล</th>
-                    <th style={{ minWidth: 100 }}>ชื่อเล่น</th>
-                    {FIELDS.map((f) => (
-                      <th key={f.key} className="text-center" style={{ minWidth: 120 }}>
-                        {f.label}
-                        <div className="small text-muted">(1–3)</div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {children.map((c, idx) => {
-                    const row = rows.find((r) => r.child_id === c.child_id) || {};
-                    return (
-                      <tr key={c.child_id}>
-                        <td className="text-center">{idx + 1}</td>
-                        <td>{c.first_name} {c.last_name}</td>
-                        <td>{c.nickname || "-"}</td>
-                        {FIELDS.map((f) => (
-                          <td key={f.key}>
-                            <ScoreCell
-                              name={`${c.child_id}-${f.key}`}
-                              value={row[f.key]}
-                              onChange={(n) => setCell(c.child_id, f.key, n)}
-                            />
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="col-md-2">
+            <label className="form-label fw-semibold">ปีการศึกษา (พ.ศ.)</label>
+            <input
+              type="number"
+              className="form-control"
+              value={academicYear}
+              onChange={(e) => setAcademicYear(e.target.value)}
+            />
+          </div>
 
-          <div className="text-muted small mt-2">
-            * ให้คะแนน <b>1 = ปรับปรุง</b> / <b>2 = ปานกลาง</b> / <b>3 = ดีเยี่ยม</b>
+          <div className="col-md-3">
+            <label className="form-label fw-semibold">วันที่ประเมิน</label>
+            <div className="input-group">
+              <input
+                type="date"
+                className="form-control"
+                value={date}
+                onChange={handleDateChange}
+              />
+              <span className="input-group-text">{displayDate}</span>
+            </div>
+          </div>
+
+          {/* ✅ ช่องค้นหาชื่อเด็ก */}
+          <div className="col-md-5">
+            <label className="form-label fw-semibold">ค้นหาชื่อเด็ก</label>
+            <div className="input-group">
+              <span className="input-group-text bg-light">
+                <i className="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="พิมพ์ชื่อหรือนามสกุลเด็ก..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </div>
       </div>
+
+      {/* รายชื่อเด็ก */}
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" />
+        </div>
+      ) : (
+        <div className="row g-4">
+          {filteredChildren.length === 0 ? (
+            <div className="text-center text-muted">ไม่พบรายชื่อเด็ก</div>
+          ) : (
+            filteredChildren.map((c, i) => {
+              const row = rows.find((r) => r.child_id === c.child_id) || {};
+              return (
+                <div key={c.child_id} className="col-md-6">
+                  <div className="card measure-card card-cute p-3">
+                    <h6 className="fw-bold text-primary mb-3">
+                      <i className="bi bi-person-circle me-2 text-primary"></i>
+                      {i + 1}. {c.first_name} {c.last_name}{" "}
+                      <span className="text-muted">({c.nickname || "-"})</span>
+                    </h6>
+
+                    <div className="row g-3">
+                      {FIELDS.map((f) => (
+                        <div key={f.key} className="col-6">
+                          <div className="measure-box d-flex justify-content-between align-items-center">
+                            <span className="fw-semibold">{f.label}</span>
+                            <ScoreCell
+                              value={row[f.key]}
+                              onChange={(n) => setCell(c.child_id, f.key, n)}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
