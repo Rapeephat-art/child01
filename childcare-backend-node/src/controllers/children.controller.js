@@ -420,3 +420,59 @@ export async function getMyChildren(req, res) {
       .json({ message: 'โหลดข้อมูลบุตรหลานไม่สำเร็จ' });
   }
 }
+export async function index(req, res) {
+  try {
+    let sql =
+      `SELECT child_id, center_id,
+              prefix, first_name, last_name, nickname,
+              gender, citizen_id, birth_date, status,
+              parent_id, father_id, mother_id
+         FROM children`;
+    const params = [];
+
+    if (req.user?.type === 'teacher') {
+      sql += ` WHERE (center_id = ? OR center_id IS NULL)`;
+      params.push(req.user.center_id ?? null);
+    }
+
+    sql += ` ORDER BY first_name, last_name`;
+
+    const [rows] = await pool.query(sql, params);
+    return res.json(rows || []);
+  } catch (e) {
+    console.error('[children.index] error:', e);
+    return res.status(500).json({ message: 'โหลดรายชื่อเด็กไม่สำเร็จ' });
+  }
+}
+
+/**
+ * ✅ GET /api/children/mine
+ * ใช้สำหรับ "ผู้ปกครอง" ดูบุตรหลานของตัวเอง
+ * อิงจาก children.parent_id = req.user.id
+ */
+export async function mine(req, res) {
+  try {
+    // กันเคสเรียกผิด role
+    if (req.user?.type !== 'parent') {
+      return res.status(403).json({ message: 'เฉพาะผู้ปกครองเท่านั้น' });
+    }
+
+    const parentId = req.user.id;
+
+    const [rows] = await pool.query(
+      `SELECT child_id, center_id,
+              prefix, first_name, last_name, nickname,
+              gender, citizen_id, birth_date, status,
+              parent_id
+         FROM children
+        WHERE parent_id = ?
+        ORDER BY first_name, last_name`,
+      [parentId]
+    );
+
+    return res.json(rows || []);
+  } catch (e) {
+    console.error('[children.mine] error:', e);
+    return res.status(500).json({ message: 'โหลดข้อมูลบุตรหลานไม่สำเร็จ' });
+  }
+}
