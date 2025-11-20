@@ -25,17 +25,25 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await login(username.trim(), password);
-      nav("/", { replace: true });
+
+      // ✅ รับ user ที่ล็อกอินสำเร็จกลับมา
+      const loggedUser = await login(username.trim(), password);
+
+      // ✅ แยกปลายทางตาม type
+      if (loggedUser?.type === "parent") {
+        // ผู้ปกครอง → ไปหน้า Index
+        nav("/index", { replace: true }); // เปลี่ยน path ตามที่ตั้ง route ไว้
+      } else {
+        // admin / teacher → ไปหน้า Dashboard ปกติ
+        nav("/", { replace: true });
+      }
     } catch (err) {
-      // ดึงข้อความผิดพลาดให้ละเอียดขึ้น
       const msg =
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
         "เข้าสู่ระบบไม่สำเร็จ";
       setError(String(msg));
-      // กันเคสที่ backend ล่ม/500 ดูสถานะและ body จะได้ debug ง่าย
       if (err?.response) {
         console.warn("[LOGIN] status:", err.response.status);
         console.warn("[LOGIN] resp body:", err.response.data);
@@ -89,7 +97,11 @@ export default function Login() {
                 />
               </div>
 
-              <button className="btn btn-primary w-100" type="submit" disabled={loading}>
+              <button
+                className="btn btn-primary w-100"
+                type="submit"
+                disabled={loading}
+              >
                 {loading ? (
                   <span className="spinner-border spinner-border-sm me-2" />
                 ) : (
@@ -100,9 +112,7 @@ export default function Login() {
             </form>
           </div>
 
-          {/* บอกทิปเล็ก ๆ ช่วยดีบัก */}
           <div className="text-muted small mt-3">
-           
             <code> </code>
           </div>
         </div>

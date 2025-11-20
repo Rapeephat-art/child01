@@ -1,4 +1,3 @@
-// src/routes/children.routes.js
 import { Router } from 'express';
 import {
   index as listChildren,
@@ -6,12 +5,16 @@ import {
   show as getChild,
   update as updateChild,
   destroy as deleteChild,
+  getMyChildren,   // 👈 อันนี้ต้อง import ด้วย
 } from '../controllers/children.controller.js';
-import { authRequired, requireTeacher } from '../middleware/auth.js';
+import { authRequired, requireTeacher, requireParent } from '../middleware/auth.js';
 
 const r = Router();
 
-// ต้องล็อกอิน + ต้องเป็นครู ทุกเมธอด
+// ✅ ผู้ปกครองดึงลูกของตัวเอง
+r.get('/children/mine', authRequired, requireParent, getMyChildren);
+
+// ครูจัดการเด็ก
 r.get   ('/children',      authRequired, requireTeacher, listChildren);
 r.post  ('/children',      authRequired, requireTeacher, createChild);
 r.get   ('/children/:id',  authRequired, requireTeacher, getChild);

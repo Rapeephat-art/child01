@@ -1,12 +1,15 @@
 // src/routes/auth.routes.js
-import { Router } from 'express'
-import * as auth from '../controllers/auth.controller.js'
-import { authRequired } from '../middleware/auth.js'
+import { Router } from 'express';
+import * as auth from '../controllers/auth.controller.js';
+import { authRequired } from '../middleware/auth.js';
 
-const r = Router()
+const r = Router();
 
-r.post('/register', auth.register)
-r.post('/login', auth.login)
-r.post('/logout', authRequired, auth.logout)
+r.post('/register', auth.register);
+r.post('/login', auth.login);
+r.post('/logout', authRequired, auth.logout);
 
-export default r
+// ⭐ ต้องมี ไม่งั้น frontend login แล้วโหลด user ไม่ได้
+r.get('/me', authRequired, auth.me);
+
+export default r;

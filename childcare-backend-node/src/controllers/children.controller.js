@@ -390,3 +390,33 @@ export async function destroy(req, res) {
     return res.status(500).json({ message: 'ลบไม่สำเร็จ' });
   }
 }
+// ✅ GET /api/children/mine
+// ดึงบุตรหลานของผู้ปกครองที่ล็อกอินอยู่
+export async function getMyChildren(req, res) {
+  try {
+    // ต้องเป็นผู้ปกครองเท่านั้น
+    if (!req.user || req.user.type !== 'parent') {
+      return res.status(403).json({ message: 'เฉพาะผู้ปกครองเท่านั้น' });
+    }
+
+    const parentId = req.user.id; // id ของ parent มาจาก token
+
+    const [rows] = await pool.query(
+      `SELECT child_id, center_id,
+              prefix, first_name, last_name, nickname,
+              gender, citizen_id, birth_date, status,
+              parent_id, father_id, mother_id
+         FROM children
+        WHERE parent_id = ?
+        ORDER BY first_name, last_name`,
+      [parentId]
+    );
+
+    return res.json(rows || []);
+  } catch (e) {
+    console.error('[children.getMyChildren] error:', e);
+    return res
+      .status(500)
+      .json({ message: 'โหลดข้อมูลบุตรหลานไม่สำเร็จ' });
+  }
+}

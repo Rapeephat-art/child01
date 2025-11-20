@@ -1,52 +1,7 @@
 // src/middleware/auth.js
 import jwt from 'jsonwebtoken';
-import { pool } from '../config/db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
-
-/** ดึงข้อมูล user จาก payload (ครู/ผู้ปกครอง) */
-async function getUserByToken(payload) {
-  if (!payload?.type || !payload?.id) return null;
-
-  if (payload.type === 'teacher') {
-    const [rows] = await pool.query(
-      `SELECT teacher_id, username, first_name, last_name, role_id, center_id
-         FROM teachers
-        WHERE teacher_id=? LIMIT 1`,
-      [payload.id]
-    );
-    if (!rows.length) return null;
-    const t = rows[0];
-    return {
-      id: t.teacher_id,
-      type: 'teacher',
-      username: t.username,
-      name: `${t.first_name ?? ''} ${t.last_name ?? ''}`.trim(),
-      role_id: t.role_id,
-      center_id: t.center_id,
-    };
-  }
-
-  if (payload.type === 'parent') {
-    const [rows] = await pool.query(
-      `SELECT parent_id, username, first_name, last_name, role_id
-         FROM parents
-        WHERE parent_id=? LIMIT 1`,
-      [payload.id]
-    );
-    if (!rows.length) return null;
-    const p = rows[0];
-    return {
-      id: p.parent_id,
-      type: 'parent',
-      username: p.username,
-      name: `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim(),
-      role_id: p.role_id,
-    };
-  }
-
-  return null;
-}
 
 /** ดึง token จาก cookie หรือ Authorization header */
 function extractToken(req) {
@@ -63,15 +18,21 @@ function extractToken(req) {
 export async function authRequired(req, res, next) {
   try {
     const token = extractToken(req);
-    if (!token) return res.status(401).json({ message: 'Unauthenticated' });
+    if (!token) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
 
     const payload = jwt.verify(token, JWT_SECRET);
-    const user = await getUserByToken(payload);
-    if (!user) return res.status(401).json({ message: 'User not found' });
+    // payload คือ object user ที่เรา sign จาก login / register
+    // ต้องมี id + type อย่างน้อย
+    if (!payload || !payload.id || !payload.type) {
+      return res.status(401).json({ message: 'Unauthenticated' });
+    }
 
-    req.user = user;
+    req.user = payload;
     next();
   } catch (e) {
+    console.error('authRequired error:', e?.message || e);
     return res.status(401).json({ message: 'Unauthenticated' });
   }
 }
@@ -83,8 +44,9 @@ export async function authOptional(req, res, next) {
     if (!token) return next();
 
     const payload = jwt.verify(token, JWT_SECRET);
-    const user = await getUserByToken(payload);
-    if (user) req.user = user;
+    if (payload && payload.id && payload.type) {
+      req.user = payload;
+    }
     next();
   } catch {
     next();
@@ -99,7 +61,7 @@ export function requireTeacher(req, res, next) {
   next();
 }
 
-/** (เผื่อใช้) จำกัดสิทธิ์: ผู้ปกครองเท่านั้น */
+/** จำกัดสิทธิ์: ผู้ปกครองเท่านั้น */
 export function requireParent(req, res, next) {
   if (req.user?.type !== 'parent') {
     return res.status(403).json({ message: 'เฉพาะผู้ปกครองเท่านั้น' });
@@ -107,5 +69,13 @@ export function requireParent(req, res, next) {
   next();
 }
 
-/** ✅ alias เผื่อบาง route ยังอ้างชื่อเดิม */
+/** จำกัดสิทธิ์: แอดมินเท่านั้น (ถ้าอยากใช้ที่หลัง) */
+export function requireAdmin(req, res, next) {
+  if (req.user?.type !== 'admin') {
+    return res.status(403).json({ message: 'เฉพาะผู้ดูแลระบบเท่านั้น' });
+  }
+  next();
+}
+
+/** alias เผื่อบาง route ยังอ้างชื่อเดิม */
 export const teacherOnly = requireTeacher;

@@ -20,19 +20,30 @@ export function AuthProvider({ children }) {
     }
   }
 
-  useEffect(() => { refreshMe(); }, []);
+  useEffect(() => {
+    refreshMe();
+  }, []);
 
+  // ✅ แก้ตรงนี้
   async function login(username, password) {
     try {
-      // เน้นให้แน่ใจว่า cookie ถูกส่ง/รับ
-      await api.post(
+      const res = await api.post(
         "/auth/login",
         { username, password },
         { withCredentials: true }
       );
+
+      const loggedUser = res.data?.user || null;
+
+      if (loggedUser) {
+        setUser(loggedUser);
+        return loggedUser; // ส่ง user กลับไปให้ Login.jsx ใช้ตัดสินใจ redirect
+      }
+
+      // เผื่อกรณี backend ไม่ส่ง user กลับมา
       await refreshMe();
+      return null;
     } catch (err) {
-      // โยน error กลับไปให้ Login.jsx แสดงข้อความจาก backend ได้
       throw err;
     }
   }

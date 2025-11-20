@@ -8,11 +8,12 @@ import Children from "./pages/Children";
 import Register from "./pages/Register";
 import EnrollRequests from "./pages/EnrollRequests";
 
-import Health from "./pages/Health";          // ฟอร์มสุขภาพ (ครู)
-import Attendance from "./pages/Attendance";  // ฟอร์มเช็คชื่อมาเรียน (ครู)
-import MealMenu from "./pages/MealMenu";      // ฟอร์มเมนูอาหารกลางวัน (ครู)
-import Announcement from "./pages/Announcements";
- // ✅ หน้า "ประกาศ"
+import Index from "./pages/Index";              // ✅ หน้า Index (หน้าแรกสาธารณะ)
+import Health from "./pages/Health";            // ฟอร์มสุขภาพ (ครู)
+import Attendance from "./pages/Attendance";    // ฟอร์มเช็คชื่อมาเรียน (ครู)
+import MealMenu from "./pages/MealMenu";        // ฟอร์มเมนูอาหารกลางวัน (ครู)
+import Announcement from "./pages/Announcements"; // ✅ หน้า "ประกาศ"
+import MyChildren from "./pages/MyChildren";
 
 import { useAuth } from "./context/AuthProvider";
 
@@ -49,9 +50,12 @@ export default function App() {
     <>
       <Navbar />
       <Routes>
-        {/* 🏠 หน้าแรก */}
+        {/* 🏠 หน้าแรก (Index) — สาธารณะ ไม่ต้องล็อกอิน */}
+        <Route path="/" element={<Index />} />
+
+        {/* 🏠 หน้าแดชบอร์ดจริง (ต้องล็อกอิน) */}
         <Route
-          path="/"
+          path="/dashboard"
           element={
             <Private>
               <Dashboard />
@@ -76,6 +80,16 @@ export default function App() {
             </GuestOnly>
           }
         />
+<Route
+  path="/my-children"
+  element={
+    <Private>
+      <ParentOnly>
+        <MyChildren />
+      </ParentOnly>
+    </Private>
+  }
+/>
 
         {/* 👩‍🏫 สำหรับ "ครู" */}
         <Route
@@ -141,7 +155,7 @@ export default function App() {
           }
         />
 
-        {/* 📢 สำหรับทั้งครูและผู้ปกครอง */}
+        {/* 📢 ประกาศ — ปัจจุบันอยู่หลังล็อกอิน (ครู/ผู้ปกครอง) */}
         <Route
           path="/announcements"
           element={

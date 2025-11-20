@@ -5,9 +5,10 @@ import fs from "fs";
 // ✅ ดึงประกาศทั้งหมด
 export async function getAll(req, res) {
   try {
-    const [rows] = await pool.query(
-      "SELECT * FROM announcements ORDER BY posted_at DESC"
-    );
+  const [rows] = await pool.query(
+  'SELECT * FROM announcements ORDER BY created_at DESC'
+);
+
     res.json(rows);
   } catch (err) {
     console.error("โหลดประกาศไม่สำเร็จ:", err);

@@ -342,3 +342,14 @@ a:hover { color: #3f8fce; }
   border-color: #3b8cff;
   box-shadow: 0 0 0 3px rgba(59,140,255,0.25);
 }
+
+/* =============================
+   ส่วนเพิ่มเติมจากหน้า Index
+   ============================= */
+.page-index {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color: #222;
+}
+.muted { color: #666; }
+.small { font-size: 12px; }
+.announcement-list { list-style: none; padding: 0; margin: 0; }
