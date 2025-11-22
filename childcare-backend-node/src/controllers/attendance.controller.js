@@ -8,8 +8,6 @@ function todayStr() {
 
 /**
  * GET /api/attendance/init?date=YYYY-MM-DD&period=เช้า|กลางวัน
- * - สร้าง session ถ้ายังไม่มี
- * - คืนรายชื่อเด็กทั้งหมดในศูนย์เดียวกับครู + สถานะที่เคยบันทึก (ถ้ามี)
  */
 export async function initAttendance(req, res) {
   try {
@@ -26,6 +24,12 @@ export async function initAttendance(req, res) {
     );
     if (!trows.length) return res.status(404).json({ message: 'ไม่พบข้อมูลครู' });
     const centerId = trows[0].center_id;
+
+    // ถ้าครูไม่มี center_id อธิบายให้ชัด
+    if (centerId == null) {
+      // อาจจะต้องอนุญาตให้ครูดูเด็ก center NULL ถ้าต้องการ — ปัจจุบันเราตอบว่าง
+      return res.json({ session: { session_id: null, date, period }, rows: [] });
+    }
 
     // 2) สร้าง/ดึง session
     const [s1] = await pool.query(
@@ -47,7 +51,7 @@ export async function initAttendance(req, res) {
     const [kids] = await pool.query(
       `SELECT child_id, prefix, first_name, last_name, nickname, gender
        FROM children
-       WHERE center_id=? 
+       WHERE center_id=?
        ORDER BY first_name, last_name`,
       [centerId]
     );
@@ -59,25 +63,23 @@ export async function initAttendance(req, res) {
     );
     const map = new Map(rec.map(r => [r.child_id, r]));
 
-    const rows = kids.map(k => ({
+    const rows = (kids || []).map(k => ({
       child_id: k.child_id,
-      name: `${k.prefix ?? ''}${k.first_name} ${k.last_name}`.trim(),
+      name: `${k.prefix ? k.prefix + ' ' : ''}${k.first_name} ${k.last_name}`.trim(),
       nickname: k.nickname || '',
       status: map.get(k.child_id)?.status || 'มา',
       note: map.get(k.child_id)?.note || ''
     }));
 
-    res.json({ session: { session_id: sessionId, date, period }, rows });
+    return res.json({ session: { session_id: sessionId, date, period }, rows });
   } catch (err) {
     console.error('ATTEND INIT ERR', err);
-    res.status(500).json({ message: 'โหลดรายชื่อเด็กไม่สำเร็จ' });
+    return res.status(500).json({ message: 'โหลดรายชื่อเด็กไม่สำเร็จ' });
   }
 }
 
 /**
  * POST /api/attendance/:sessionId/bulk
- * body: { items: [{child_id, status, note}] }
- * - upsert ตาม unique(session_id, child_id)
  */
 export async function saveBulkAttendance(req, res) {
   try {
@@ -90,12 +92,20 @@ export async function saveBulkAttendance(req, res) {
       return res.status(422).json({ message: 'ไม่มีข้อมูลสำหรับบันทึก' });
     }
 
+    // ปรับให้ sessionId เป็นตัวเลข และตรวจว่ามีค่า
+    const sid = Number(sessionId);
+    if (!sid) return res.status(422).json({ message: 'sessionId ไม่ถูกต้อง' });
+
     const values = [];
     for (const it of items) {
-      values.push([sessionId, it.child_id, it.status || 'มา', it.note || null]);
+      // ตรวจความถูกต้องของ child_id
+      if (!it || !it.child_id) continue;
+      values.push([sid, Number(it.child_id), it.status || 'มา', it.note || null]);
+    }
+    if (!values.length) {
+      return res.status(422).json({ message: 'ไม่มีข้อมูลสำหรับบันทึก (child_id ขาด)' });
     }
 
-    // upsert ทีละก้อน
     await pool.query(
       `INSERT INTO attendance_records (session_id, child_id, status, note)
        VALUES ?
@@ -103,9 +113,9 @@ export async function saveBulkAttendance(req, res) {
       [values]
     );
 
-    res.json({ ok: true, count: items.length });
+    return res.json({ ok: true, count: values.length });
   } catch (err) {
     console.error('ATTEND SAVE ERR', err);
-    res.status(500).json({ message: 'บันทึกไม่สำเร็จ' });
+    return res.status(500).json({ message: 'บันทึกไม่สำเร็จ' });
   }
 }

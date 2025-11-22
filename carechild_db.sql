@@ -35,7 +35,11 @@ CREATE TABLE IF NOT EXISTS `addresses` (
   `postal_code` varchar(10) DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`address_id`)
+  PRIMARY KEY (`address_id`),
+  KEY `fk_addresses_children` (`child_id`),
+  KEY `fk_addresses_parents` (`parent_id`),
+  CONSTRAINT `fk_addresses_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`),
+  CONSTRAINT `fk_addresses_parents` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -48,7 +52,9 @@ CREATE TABLE IF NOT EXISTS `announcements` (
   `content` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`announcement_id`)
+  PRIMARY KEY (`announcement_id`),
+  KEY `fk_announcements_users` (`created_by`),
+  CONSTRAINT `fk_announcements_users` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -82,20 +88,9 @@ CREATE TABLE IF NOT EXISTS `checkins` (
   `node` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`checkin_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- Data exporting was unselected.
-
--- Dumping structure for table carechild_db.checkin_sessions
-DROP TABLE IF EXISTS `checkin_sessions`;
-CREATE TABLE IF NOT EXISTS `checkin_sessions` (
-  `checkin_session_id` int NOT NULL AUTO_INCREMENT,
-  `session_date` date DEFAULT NULL,
-  `teacher_id` int DEFAULT NULL,
-  `created_by` int DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`checkin_session_id`)
+  PRIMARY KEY (`checkin_id`),
+  KEY `fk_checkins_children` (`child_id`),
+  CONSTRAINT `fk_checkins_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -130,8 +125,18 @@ CREATE TABLE IF NOT EXISTS `children` (
   `current_address_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`child_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`child_id`),
+  KEY `fk_children_parents1` (`parent_id`),
+  KEY `fk_children_parents2` (`father_parent_id`),
+  KEY `fk_children_parents3` (`mother_parent_id`),
+  KEY `fk_children_addr_home` (`home_address_id`),
+  KEY `fk_children_addr_curr` (`current_address_id`),
+  CONSTRAINT `fk_children_addr_curr` FOREIGN KEY (`current_address_id`) REFERENCES `addresses` (`address_id`),
+  CONSTRAINT `fk_children_addr_home` FOREIGN KEY (`home_address_id`) REFERENCES `addresses` (`address_id`),
+  CONSTRAINT `fk_children_parents1` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`parent_id`),
+  CONSTRAINT `fk_children_parents2` FOREIGN KEY (`father_parent_id`) REFERENCES `parents` (`parent_id`),
+  CONSTRAINT `fk_children_parents3` FOREIGN KEY (`mother_parent_id`) REFERENCES `parents` (`parent_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -146,7 +151,9 @@ CREATE TABLE IF NOT EXISTS `child_food_allergies` (
   `note` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`allergy_id`)
+  PRIMARY KEY (`allergy_id`),
+  KEY `fk_allergy_children` (`child_id`),
+  CONSTRAINT `fk_allergy_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -161,7 +168,11 @@ CREATE TABLE IF NOT EXISTS `classrooms` (
   `homeroom_teacher_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`classroom_id`)
+  PRIMARY KEY (`classroom_id`),
+  KEY `fk_classrooms_centers` (`center_id`),
+  KEY `fk_classrooms_teachers` (`homeroom_teacher_id`),
+  CONSTRAINT `fk_classrooms_centers` FOREIGN KEY (`center_id`) REFERENCES `centers` (`center_id`),
+  CONSTRAINT `fk_classrooms_teachers` FOREIGN KEY (`homeroom_teacher_id`) REFERENCES `teachers` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -177,7 +188,9 @@ CREATE TABLE IF NOT EXISTS `daily_activity_logs` (
   `note` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`daily_log_id`)
+  PRIMARY KEY (`daily_log_id`),
+  KEY `fk_daily_children` (`child_id`),
+  CONSTRAINT `fk_daily_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -193,7 +206,13 @@ CREATE TABLE IF NOT EXISTS `enrollments` (
   `upload_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`enrollment_id`)
+  PRIMARY KEY (`enrollment_id`),
+  KEY `fk_enroll_children` (`child_id`),
+  KEY `fk_enroll_parents` (`parent_id`),
+  KEY `fk_enroll_uploads` (`upload_id`),
+  CONSTRAINT `fk_enroll_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`),
+  CONSTRAINT `fk_enroll_parents` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`parent_id`),
+  CONSTRAINT `fk_enroll_uploads` FOREIGN KEY (`upload_id`) REFERENCES `uploads` (`upload_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -209,7 +228,13 @@ CREATE TABLE IF NOT EXISTS `files` (
   `center_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`file_id`)
+  PRIMARY KEY (`file_id`),
+  KEY `fk_files_centers` (`center_id`),
+  KEY `fk_files_children` (`child_id`),
+  KEY `fk_files_teachers` (`teacher_id`),
+  CONSTRAINT `fk_files_centers` FOREIGN KEY (`center_id`) REFERENCES `centers` (`center_id`),
+  CONSTRAINT `fk_files_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`),
+  CONSTRAINT `fk_files_teachers` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -230,7 +255,11 @@ CREATE TABLE IF NOT EXISTS `health_evaluations` (
   `nose` text,
   `skin` text,
   `nail` text,
-  PRIMARY KEY (`health_eval_id`)
+  PRIMARY KEY (`health_eval_id`),
+  KEY `fk_health_children` (`child_id`),
+  KEY `fk_health_teachers` (`evaluated_by`),
+  CONSTRAINT `fk_health_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`),
+  CONSTRAINT `fk_health_teachers` FOREIGN KEY (`evaluated_by`) REFERENCES `teachers` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -245,7 +274,11 @@ CREATE TABLE IF NOT EXISTS `lunch_summaries` (
   `note` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`lunch_summary_id`)
+  PRIMARY KEY (`lunch_summary_id`),
+  KEY `fk_lunch_menus` (`menu_id`),
+  KEY `fk_lunch_teachers` (`teacher_id`),
+  CONSTRAINT `fk_lunch_menus` FOREIGN KEY (`menu_id`) REFERENCES `menus` (`menu_id`),
+  CONSTRAINT `fk_lunch_teachers` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -259,7 +292,9 @@ CREATE TABLE IF NOT EXISTS `menus` (
   `notes` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`menu_id`)
+  PRIMARY KEY (`menu_id`),
+  KEY `fk_menus_menutypes` (`menu_type_id`),
+  CONSTRAINT `fk_menus_menutypes` FOREIGN KEY (`menu_type_id`) REFERENCES `menu_types` (`menu_type_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -288,7 +323,9 @@ CREATE TABLE IF NOT EXISTS `monthly_measurements` (
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `child_id` int DEFAULT NULL,
-  PRIMARY KEY (`measurement_id`)
+  PRIMARY KEY (`measurement_id`),
+  KEY `fk_monthly_children` (`child_id`),
+  CONSTRAINT `fk_monthly_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -308,7 +345,7 @@ CREATE TABLE IF NOT EXISTS `parents` (
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -321,7 +358,11 @@ CREATE TABLE IF NOT EXISTS `relation` (
   `relationship` varchar(50) DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`relation_id`)
+  PRIMARY KEY (`relation_id`),
+  KEY `fk_relation_children` (`child_id`),
+  KEY `fk_relation_parents` (`parent_id`),
+  CONSTRAINT `fk_relation_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`),
+  CONSTRAINT `fk_relation_parents` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -340,8 +381,12 @@ CREATE TABLE IF NOT EXISTS `teachers` (
   `email` varchar(100) DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`teacher_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`teacher_id`),
+  KEY `fk_teachers_centers` (`center_id`),
+  KEY `fk_teachers_classrooms` (`classroom_id`),
+  CONSTRAINT `fk_teachers_centers` FOREIGN KEY (`center_id`) REFERENCES `centers` (`center_id`),
+  CONSTRAINT `fk_teachers_classrooms` FOREIGN KEY (`classroom_id`) REFERENCES `classrooms` (`classroom_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
@@ -358,7 +403,13 @@ CREATE TABLE IF NOT EXISTS `uploads` (
   `description` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`upload_id`)
+  PRIMARY KEY (`upload_id`),
+  KEY `fk_uploads_children` (`child_id`),
+  KEY `fk_uploads_parents` (`parent_id`),
+  KEY `fk_uploads_teachers` (`teacher_id`),
+  CONSTRAINT `fk_uploads_children` FOREIGN KEY (`child_id`) REFERENCES `children` (`child_id`),
+  CONSTRAINT `fk_uploads_parents` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`parent_id`),
+  CONSTRAINT `fk_uploads_teachers` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`teacher_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
@@ -376,8 +427,14 @@ CREATE TABLE IF NOT EXISTS `users` (
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
-  UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  UNIQUE KEY `username` (`username`),
+  KEY `fk_users_centers` (`center_id`),
+  KEY `fk_users_teachers` (`teacher_id`),
+  KEY `fk_users_parents` (`parent_id`),
+  CONSTRAINT `fk_users_centers` FOREIGN KEY (`center_id`) REFERENCES `centers` (`center_id`),
+  CONSTRAINT `fk_users_parents` FOREIGN KEY (`parent_id`) REFERENCES `parents` (`parent_id`),
+  CONSTRAINT `fk_users_teachers` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`teacher_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Data exporting was unselected.
 
