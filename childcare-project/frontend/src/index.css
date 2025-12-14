@@ -3,12 +3,19 @@
   --page-bg: linear-gradient(135deg,#dfffe8 0%, #e7ffd7 50%, #f8ffea 100%);
   --card-bg: #fff;
   --muted: #6b7280;
-  --brand: #0b5ed7;
+  --brand: #5675a3;
   --max-width: 1200px;
 }
 
 /* base tweaks */
-body { background: var(--page-bg); color:#0f1724; font-family: "Noto Sans Thai", "Inter", Arial, sans-serif; -webkit-font-smoothing:antialiased; }
+body {
+  background: url('../public/images/bg-kindergarten.jpg.png') no-repeat center center fixed;
+  background-size: cover;
+  color:#0f1724;
+  font-family: "Noto Sans Thai", "Inter", Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
 .site-wrapper { min-height: 100vh; }
 
 /* เน้นให้ container ตรงกับขนาดที่ต้องการ */

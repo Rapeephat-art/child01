@@ -32,7 +32,9 @@ import AdminUsers from './pages/AdminUsers';
 import EnrollmentsList from './pages/EnrollmentsList';
 import EnrollmentDetail from "./pages/EnrollmentDetail";
 import AdminEnrollments from './pages/AdminEnrollments';
-
+import ChildrenCount from './pages/ChildrenCount';
+import AdminMenus from "./pages/AdminMenus";
+import AdminDailyMenu from './pages/AdminDailyMenu';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -99,6 +101,9 @@ function App() {
 
           {/* Admin users */}
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/children-count" element={<ChildrenCount />} />
+          <Route path="/admin/menus" element={<AdminMenus />} />
+          <Route path="/admin/daily-menu" element={<AdminDailyMenu />} />
         </Routes>
       </div>
     </div>

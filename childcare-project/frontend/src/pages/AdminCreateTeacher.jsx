@@ -29,7 +29,7 @@ export default function AdminCreateTeacher() {
         <h5>สร้างบัญชีครู</h5>
         <form onSubmit={handleCreate}>
           <div className="mb-3">
-            <label>Username</label>
+            <label>ชื่อ</label>
             <input className="form-control" value={username} onChange={e=>setUsername(e.target.value)} required />
           </div>
           <div className="mb-3">

@@ -158,7 +158,12 @@ function handleNext() {
           <div className="row g-3">
             <div className="col-md-2">
               <label className="form-label">คำนำหน้า</label>
-              <input name="guardian_prefix" className="form-control" value={form.guardian_prefix} onChange={onChange} />
+              <select className="form-select" name="father_prefix" value={form.father_prefix} onChange={onChange}>
+              <option value="">เลือก</option>
+              <option value="นาย">นาย</option>
+              <option value="นาง">นาง</option>
+              <option value="นางสาว">นางสาว</option>  
+              </select>
             </div>
             <div className="col-md-5">
               <label className="form-label">ชื่อ</label>

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const pool = require('../db.js');
+
 const { authMiddleware, permit } = require('../middlewares/auth');
 const ExcelJS = require('exceljs');
 const { Document, Packer, Paragraph, TextRun } = require('docx');

@@ -133,12 +133,10 @@ export default function AdminUsers() {
           <table className="table table-hover mb-0">
             <thead className="table-light">
               <tr>
-                <th style={{width:40}}>#</th>
-                <th style={{width:90}}>user_id</th>
-                <th>username</th>
-                <th style={{width:120}}>role</th>
-                <th style={{width:120}}>parent_id</th>
-                <th style={{width:200}}>created_at</th>
+                <th style={{width:40}}>ลำดับ</th>
+                <th>ชื่อ</th>
+                <th style={{width:120}}>สถานะ</th>
+                <th style={{width:200}}>วันที่สมัคร</th>
                 <th style={{width:160}}></th>
               </tr>
             </thead>
@@ -149,10 +147,8 @@ export default function AdminUsers() {
               {rows.map((r, idx) => (
                 <tr key={r.user_id}>
                   <td>{idx+1}</td>
-                  <td>{r.user_id}</td>
                   <td>{r.username}</td>
                   <td>{r.role}</td>
-                  <td>{r.parent_id ?? '-'}</td>
                   <td>{r.created_at}</td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-primary me-2" onClick={() => openEdit(r)}>แก้ไข</button>
@@ -190,12 +186,7 @@ export default function AdminUsers() {
                       <option value="admin">admin</option>
                       <option value="teacher">teacher</option>
                       <option value="parent">parent</option>
-                      <option value="staff">staff</option>
                     </select>
-                  </div>
-                  <div className="mb-2">
-                    <label className="form-label">parent_id (optional)</label>
-                    <input className="form-control" name="parent_id" value={form.parent_id} onChange={onChange} />
                   </div>
                 </div>
                 <div className="modal-footer">

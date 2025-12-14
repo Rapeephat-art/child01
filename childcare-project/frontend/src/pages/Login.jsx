@@ -1,11 +1,10 @@
-// src/pages/Login.jsx
-import React, { useState } from 'react';
-import API, { setAuthToken } from '../api/api';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import API, { setAuthToken } from "../api/api";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Login({ setUser }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -13,45 +12,74 @@ export default function Login({ setUser }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await API.post('/auth/login', { username, password });
+      const res = await API.post("/auth/login", { username, password });
       const { token, user } = res.data;
-      // เก็บ token + user
-      setAuthToken(token);               // เซ็ต header ให้ axios
-      localStorage.setItem('user', JSON.stringify(user));
-      // ให้ตัว App รับรู้ (ถ้ามี callback)
+
+      setAuthToken(token);
+      localStorage.setItem("user", JSON.stringify(user));
       setUser && setUser(user);
-      navigate('/');
+
+      navigate("/");
     } catch (err) {
-      console.error(err);
-      const msg = err?.response?.data?.error || 'เข้าสู่ระบบไม่สำเร็จ';
-      alert(msg);
+      alert(err?.response?.data?.error || "เข้าสู่ระบบไม่สำเร็จ");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="container mt-4">
-      <div className="mx-auto" style={{ maxWidth: 420 }}>
-        <div className="card shadow-sm">
-          <div className="card-body">
-            <h4 className="card-title mb-3">เข้าสู่ระบบ</h4>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label className="form-label">Username</label>
-                <input className="form-control" value={username} onChange={(e) => setUsername(e.target.value)} required />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Password</label>
-                <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </div>
-              <div className="d-flex justify-content-between align-items-center">
-                <button className="btn btn-primary" type="submit" disabled={loading}>
-                  {loading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
-                </button>
-                <a href="/register" className="text-decoration-none">ยังไม่มีบัญชี? สมัคร</a>
-              </div>
-            </form>
+    <div
+      className="d-flex justify-content-center align-items-center"
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #cceeff, #e8fff2)"
+      }}
+    >
+      <div
+        className="card shadow-lg"
+        style={{ width: 380, borderRadius: 18 }}
+      >
+        <div className="card-body p-4">
+          <h4 className="text-center mb-4 text-primary">
+            เข้าสู่ระบบ
+          </h4>
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">Username</label>
+              <input
+                className="form-control"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="กรอกชื่อผู้ใช้"
+                required
+              />
+            </div>
+
+            <div className="mb-3">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="กรอกรหัสผ่าน"
+                required
+              />
+            </div>
+
+            <button
+              className="btn btn-primary w-100"
+              disabled={loading}
+            >
+              {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+            </button>
+          </form>
+
+          <div className="text-center mt-3">
+            <Link to="/register" className="text-decoration-none">
+              ยังไม่มีบัญชี? สมัครสมาชิก
+            </Link>
           </div>
         </div>
       </div>

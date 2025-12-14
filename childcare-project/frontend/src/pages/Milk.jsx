@@ -81,10 +81,6 @@ export default function MilkPage() {
 
       <div className="row mb-3 g-2">
         <div className="col-md-3">
-          <label className="form-label">teacher_id (เดโม)</label>
-          <input className="form-control" value={teacherId} onChange={(e)=>setTeacherId(e.target.value)} />
-        </div>
-        <div className="col-md-3">
           <label className="form-label">วันที่</label>
           <input type="date" className="form-control" value={date} onChange={(e)=>setDate(e.target.value)} />
         </div>

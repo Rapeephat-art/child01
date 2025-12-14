@@ -93,20 +93,14 @@ export default function Enrollment() {
     sender_phone: "",
 
     // file names (แสดงชื่อไฟล์เท่านั้นในเวอร์ชันนี้)
-    attachment_birth_certificate: null,
-    attachment_reg_child: null,
-    attachment_father_id: null,
-    attachment_father_reg: null,
-    attachment_mother_id: null,
-    attachment_mother_reg: null,
+    attachment_birth_certificate: "",
+    attachment_reg_child: "",
+    attachment_father_id: "",
+    attachment_father_reg: "",
+    attachment_mother_id: "",
+    attachment_mother_reg: "",
 
-    // NOTE: ไฟล์จริงจะเก็บในฟิลด์ *_file (ไม่เซฟลง localStorage)
-    attachment_birth_certificate_file: null,
-    attachment_reg_child_file: null,
-    attachment_father_id_file: null,
-    attachment_father_reg_file: null,
-    attachment_mother_id_file: null,
-    attachment_mother_reg_file: null
+   
   };
 
   const [form, setForm] = useState(initial);
@@ -114,18 +108,11 @@ export default function Enrollment() {
   const navigate = useNavigate();
 
   // โหลด draft จาก localStorage เมื่อ mount
+    /* โหลด draft */
+  /* save draft */
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('enrollDraft');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        // merge with initial (เพื่อให้ฟิลด์ใหม่ยังมีค่า)
-        setForm((s) => ({ ...s, ...parsed }));
-      }
-    } catch (e) {
-      console.warn('Failed to load enrollDraft:', e);
-    }
-  }, []);
+    localStorage.setItem("enrollDraft", JSON.stringify(form));
+  }, [form]);
 
   // เก็บ draft ลง localStorage ทุกครั้งที่ form เปลี่ยน (ไม่รวมไฟล์จริง)
   useEffect(() => {
@@ -454,7 +441,7 @@ async function handleNext() {
               <div className="col-md-4"><label className="form-label">มือถือ</label><input className="form-control" name="mother_phone" value={form.mother_phone} onChange={onChange} /></div>
               <div className="col-md-4"><label className="form-label">อีเมล</label><input className="form-control" name="mother_email" value={form.mother_email} onChange={onChange} /></div>
               <div className="col-md-4"><label className="form-label">อาชีพ</label><input className="form-control" name="mother_job" value={form.mother_job} onChange={onChange} placeholder="" /></div>
-              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="mother_job" value={form.mother_job} onChange={onChange} placeholder="" /></div>
+              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="mother_income" value={form.mother_selaly} onChange={onChange} placeholder="" /></div>
             </div>
           </div>
         </div>
@@ -466,7 +453,7 @@ async function handleNext() {
             <div className="row g-3">
               <div className="col-md-2">
               <label className="form-label">คำนำหน้า</label>
-              <select className="form-select" name="father_prefix" value={form.father_prefix} onChange={onChange}>
+              <select className="form-select" name="sender_prefix" value={form.sender_prefix} onChange={onChange}>
               <option value="">เลือก</option>
               <option value="นาย">นาย</option>
               </select>
@@ -500,7 +487,7 @@ async function handleNext() {
               <div className="col-md-4"><label className="form-label">มือถือ</label><input className="form-control" name="father_phone" value={form.father_phone} onChange={onChange} /></div>
               <div className="col-md-4"><label className="form-label">อีเมล</label><input className="form-control" name="father_email" value={form.father_email} onChange={onChange} /></div>
               <div className="col-md-4"><label className="form-label">อาชีพ</label><input className="form-control" name="father_job" value={form.father_job} onChange={onChange} placeholder="" /></div>
-              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="father_job" value={form.father_job} onChange={onChange} placeholder="" /></div>
+              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="father_income" value={form.father_selaly} onChange={onChange} placeholder="" /></div>
             </div>
           </div>
         </div>
@@ -538,6 +525,8 @@ async function handleNext() {
               <select className="form-select" name="father_prefix" value={form.father_prefix} onChange={onChange}>
               <option value="">เลือก</option>
               <option value="นาย">นาย</option>
+              <option value="นาง">นาง</option>
+              <option value="นางสาว">นางสาว</option>  
               </select>
             </div>
               <div className="col-md-4"><label className="form-label">ชื่อ</label><input className="form-control" name="sender_name" value={form.sender_name} onChange={onChange} /></div>

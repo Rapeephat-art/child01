@@ -42,7 +42,7 @@ export default function AdminEnrollments() {
         <table className="table table-striped table-sm">
           <thead>
             <tr>
-              <th>#</th>
+              <th>ลำดับ</th>
               <th>ชื่อ-นามสกุล</th>
               <th>ชั้นที่สมัคร</th>
               <th>เบอร์ติดต่อ</th>

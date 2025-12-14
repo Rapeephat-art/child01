@@ -1,7 +1,8 @@
 // backend/routes/admissions.routes.js
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ใช้ mysql2/promise pool
+const pool = require('../db.js');
+ // ใช้ mysql2/promise pool
 // ถ้าต้องการอัปโหลดไฟล์ ให้เพิ่ม multer เหมือน enrollments route
 
 /**

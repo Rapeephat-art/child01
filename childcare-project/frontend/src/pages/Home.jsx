@@ -1,54 +1,65 @@
 // src/pages/Home.jsx
 import React from "react";
 import { Link } from "react-router-dom";
+import "../styles/Home.css";
 
 export default function Home() {
   return (
-    <div className="site-wrapper">
+    <div className="home-wrapper">
 
-      {/* ส่วนของคอนเทนต์ */}
-      <div className="content" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+      {/* กรอบหัวข้อใหญ่ */}
+      <div className="main-title-box">
+        <h1>ระบบจัดการศูนย์พัฒนาเด็กเล็ก</h1>
+      </div>
 
-        <section className="hero card-panel">
-          <div className="hero-left">
-            <h1 className="hero-title">ระบบจัดการศูนย์พัฒนาเด็กเล็ก</h1>
-          </div>
+      {/* ---------- 3 การ์ดกลางหน้า (ชมพู / เหลือง / เขียว) ---------- */}
+      <div className="cards-row">
 
-        </section>
+        <div className="color-card card-pink">
+          <div className="card-icon">👤</div>
+          <h3 className="card-title">ลงทะเบียน</h3>
+          <p className="card-desc">สำหรับ ผู้ปกครอง หรือผู้ที่เกี่ยวข้อง</p>
+        </div>
 
-        {/* ----------------------------- */}
-        {/*       ประกาศล่าสุด           */}
-        {/* ----------------------------- */}
+        <div className="color-card card-yellow">
+          <div className="card-icon">🔎</div>
+          <h3 className="card-title">ประกาศล่าสุด</h3>
+          <p className="card-desc">
+            ประกาศเรื่อง: วันหยุดพิเศษ — กรุณามารับบุตรหลานวันนี้ก่อนเวลา 15:00 น.
+          </p>
+          <Link to="/announcements" className="btn-card">อ่านเพิ่มเติม</Link>
+        </div>
 
-        <h2 className="section-title">ประกาศล่าสุด</h2>
+        <div className="color-card card-green">
+          <div className="card-icon"><img src="/seal-placeholder.png" alt="กรม" style={{ width: 56 }} /></div>
+          <h3 className="card-title">ศูนย์</h3>
+          <p className="card-desc">
+            ที่อยู่ 399 หมู่ 11 ต.หนองน้ำแดง อ.ปากช่อง จ.นครราชสีมา<br/>โทร 044 000 360 2025
+          </p>
+        </div>
 
-        <article className="announcement card-panel">
-          <div>
-            <h5>ประกาศเรื่อง: วันหยุดพิเศษ</h5>
-            <p className="text-muted">
-              เนื่องในโอกาสวันสำคัญ ทางศูนย์ฯ จะหยุดทำการในวันพรุ่งนี้ กรุณามารับบุตรหลานวันนี้ก่อนเวลา 15:00 น.
-            </p>
-            <p className="meta">โดย admin • 23/11/2568</p>
-          </div>
+      </div>
+      {/* ---------- จบ 3 การ์ดกลาง ---------- */}
 
-          <div className="announcement-cta">
-            <Link to="/announcements" className="btn btn-sm btn-outline-primary">
+      {/* กรอบข่าวประชาสัมพันธ์ (กรอบยาวตรงกลาง) */}
+      <section className="news-wrapper">
+        <div className="news-card">
+          <h2 className="news-heading">ข่าวประชาสัมพันธ์</h2>
+
+          <h3 className="news-title">ประกาศเรื่อง: วันหยุดพิเศษ</h3>
+          <p className="news-text">
+            เนื่องในโอกาสวันสำคัญ ทางศูนย์ฯ จะหยุดทำการในวันพรุ่งนี้
+            กรุณามารับบุตรหลานวันนี้ก่อนเวลา 15:00 น.
+          </p>
+          <p className="news-meta">โดย admin • 23/11/2568</p>
+
+          <div className="news-actions">
+            <Link to="/announcements" className="btn-readmore">
               อ่านเพิ่มเติม
             </Link>
           </div>
-        </article>
-
-      </div>
-
-      {/* Footer */}
-      <footer className="site-footer content">
-        <div className="card-panel">
-          <small>
-             ศูนย์พัฒนาเด็กเล็กองค์การบิรหารส่วนตำบลหนองน้ำแดง ที่อยู่ 399 หมู่ 11 ต.หนองน้ำแดง อ.ปากช่อง จ.นครราชสีมา 30450 โทร 044 000 360  {new Date().getFullYear()}
-          </small>
         </div>
-      </footer>
-
+      </section>
     </div>
   );
 }
