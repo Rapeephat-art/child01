@@ -1,17 +1,10 @@
-// src/pages/Enrollment.jsx
-import React, { useState, useEffect } from 'react';
-import API from '../api/api';
-import { useNavigate } from 'react-router-dom';
-
-/*
-  Enrollment.jsx (ปรับเพิ่มการเก็บ draft ใน localStorage, เก็บไฟล์จริง, ส่ง FormData)
-  - รักษาโครงฟอร์มของคุณไว้ครบ
-  - ต้องมี bootstrap.css โหลดไว้ในโปรเจค (index.html หรือ main.jsx)
-*/
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import API from "../api/api";
 
 export default function Enrollment() {
   const initial = {
-    // ข้อมูลเด็ก
+        /* ===== ข้อมูลเด็ก ===== */
     apply_level: "",
     student_prefix: "",
     student_firstname: "",
@@ -23,26 +16,27 @@ export default function Enrollment() {
     birth_height: "",
     oral_health: "",
 
-    // ที่อยู่ตามทะเบียน
+    /* ===== ที่อยู่เด็ก ===== */
     reg_house_no: "",
     reg_moo: "",
     reg_tambon: "",
     reg_amphur: "",
     reg_province: "",
-
-    // ที่อยู่ปัจจุบัน
     curr_house_no: "",
     curr_moo: "",
     curr_tambon: "",
     curr_amphur: "",
     curr_province: "",
 
-    // ข้อมูลมารดา
+    /* ===== มารดา ===== */
     mother_prefix: "",
-    mother_name: "",
+    mother_firstname: "",
     mother_lastname: "",
     mother_idcard: "",
     mother_birthdate: "",
+    mother_phone: "",
+    mother_job: "",
+    mother_income: "",
     mother_reg_house_no: "",
     mother_reg_moo: "",
     mother_reg_tambon: "",
@@ -53,17 +47,16 @@ export default function Enrollment() {
     mother_curr_tambon: "",
     mother_curr_amphur: "",
     mother_curr_province: "",
-    mother_phone: "",
-    mother_email: "",
-    mother_job: "",
-    mother_income: "",
 
-    // ข้อมูลบิดา
+    /* ===== บิดา ===== */
     father_prefix: "",
-    father_name: "",
+    father_firstname: "",
     father_lastname: "",
     father_idcard: "",
     father_birthdate: "",
+    father_phone: "",
+    father_job: "",
+    father_income: "",
     father_reg_house_no: "",
     father_reg_moo: "",
     father_reg_tambon: "",
@@ -74,520 +67,400 @@ export default function Enrollment() {
     father_curr_tambon: "",
     father_curr_amphur: "",
     father_curr_province: "",
-    father_phone: "",
-    father_email: "",
-    father_job: "",
-    father_income: "",
 
-    // ผู้ดูแลปัจจุบัน
+    /* ===== ความดูแล ===== */
     care_responsible: "",
+    caregiver_prefix: "",
+    caregiver_firstname: "",
+    caregiver_lastname: "",
     caregiver_job: "",
     caregiver_income: "",
     caregiver_phone: "",
 
-    // ผู้รับส่งเด็ก
+    /* ===== ผู้รับส่ง ===== */
     sender_prefix: "",
-    sender_name: "",
+    sender_firstname: "",
     sender_lastname: "",
     sender_relation: "",
-    sender_phone: "",
-
-    // file names (แสดงชื่อไฟล์เท่านั้นในเวอร์ชันนี้)
-    attachment_birth_certificate: "",
-    attachment_reg_child: "",
-    attachment_father_id: "",
-    attachment_father_reg: "",
-    attachment_mother_id: "",
-    attachment_mother_reg: "",
-
-   
+    sender_phone: ""
   };
+
 
   const [form, setForm] = useState(initial);
   const [msg, setMsg] = useState(null);
-  const navigate = useNavigate();
+  const [myEnrollment, setMyEnrollment] = useState(null);
 
-  // โหลด draft จาก localStorage เมื่อ mount
-    /* โหลด draft */
-  /* save draft */
-  useEffect(() => {
-    localStorage.setItem("enrollDraft", JSON.stringify(form));
-  }, [form]);
+  /* ===== ไฟล์แนบ ===== */
+  const [files, setFiles] = useState({
+    child_birth_certificate: null,
+    child_house_reg: null,
+    father_idcard_file: null,
+    father_house_reg: null,
+    mother_idcard_file: null,
+    mother_house_reg: null,
+  });
+useEffect(() => {
+    loadMyEnrollment();
+  }, []);
 
-  // เก็บ draft ลง localStorage ทุกครั้งที่ form เปลี่ยน (ไม่รวมไฟล์จริง)
-  useEffect(() => {
+  async function loadMyEnrollment() {
     try {
-      const copy = { ...form };
-      // ลบ field ที่เป็นไฟล์จริงก่อน serialize
-      delete copy.attachment_birth_certificate_file;
-      delete copy.attachment_reg_child_file;
-      delete copy.attachment_father_id_file;
-      delete copy.attachment_father_reg_file;
-      delete copy.attachment_mother_id_file;
-      delete copy.attachment_mother_reg_file;
-      localStorage.setItem('enrollDraft', JSON.stringify(copy));
-    } catch (e) {
-      console.warn('Failed to save enrollDraft:', e);
+      const res = await API.get("/enrollments/my");
+      setMyEnrollment(res.data?.[0] || null);
+    } catch {
+      setMyEnrollment(null);
     }
-  }, [form]);
+  }
 
   function onChange(e) {
-    const { name, value, type, checked } = e.target;
-    if (type === "checkbox") {
-      setForm((s) => ({ ...s, [name]: checked }));
-    } else {
-      setForm((s) => ({ ...s, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setForm((s) => ({ ...s, [name]: value }));
+  }
+  function onFileChange(e) {
+    const { name, files } = e.target;
+    setFiles(s => ({ ...s, [name]: files[0] || null }));
   }
 
-  // ใน Enrollment.jsx: (แทนที่ function onFile และ handleNext เดิมด้วยโค้ดนี้)
-
-function onFile(e) {
-  const inputName = e.target.name;
-  const f = e.target.files && e.target.files[0];
-  // **ยังไม่อัปโหลดไฟล์จริงตอน draft** — เอาเฉพาะชื่อไฟล์แสดง
-  setForm((s) => ({ ...s, [inputName]: f ? f.name : null }));
-}
-
-// handleNext: save draft to backend then navigate to /admission
-// แทนที่ handleNext เดิมด้วยตัวนี้
-async function handleNext() {
-  setMsg(null);
-  const err = validate();
-  if (err) {
-    // ถ้าต้องการให้ bypass validation เพื่อทดสอบ ให้ comment out บรรทัดนี้
-    setMsg({ type: "danger", text: err });
-    console.warn('validation failed:', err);
-    return;
-  }
-
-  try {
-    // ปิดปุ่มถัดไป (คุณอาจจะเพิ่ม state isSaving เพื่อ disable ปุ่ม)
-    const payload = { ...form, _savedAt: new Date().toISOString() };
-    console.log("Enrollment payload (NEXT):", payload);
-
-    // เรียก backend draft
-    const res = await API.post('/enrollments/draft', payload);
-    if (res?.data?.draftId) {
-      console.log('draft saved id=', res.data.draftId);
-      localStorage.setItem('enrollDraftId', String(res.data.draftId));
-      localStorage.setItem('enrollDraftPayload', JSON.stringify(payload));
-    } else {
-      console.warn('draft API did not return draftId, fallback to localStorage');
-      localStorage.setItem('enrollDraftPayload', JSON.stringify(payload));
-    }
-
-    // ไปหน้า next เสมอ
-    navigate('/admission');
-  } catch (err) {
-    console.error('save draft err (will fallback to localStorage):', err);
-    // fallback เก็บ local หาก server ไม่ตอบ
-    localStorage.setItem('enrollDraftPayload', JSON.stringify(form));
-    setMsg({ type: 'warning', text: 'บันทึกชั่วคราวลง localStorage (server ไม่ตอบกลับ)' });
-    navigate('/admission');
-  }
-}
-
-
-
-  function validate() {
-    if (!form.student_firstname || !form.student_lastname) {
-      return "กรุณากรอกชื่อ-นามสกุลนักเรียน";
-    }
-    if (
-      !(
-        (form.mother_name && form.mother_phone) ||
-        (form.father_name && form.father_phone) ||
-        (form.sender_name && form.sender_phone)
-      )
-    ) {
-      return "กรุณากรอกข้อมูลผู้ปกครองหรือผู้รับส่งอย่างน้อยหนึ่งคนพร้อมเบอร์ติดต่อ";
-    }
-    if (form.student_idcard && !/^\d{13}$/.test(form.student_idcard)) {
-      return "เลขบัตรประจำตัวประชาชนเด็กต้องเป็นตัวเลข 13 หลัก (ถ้ากรอก)";
-    }
-    return null;
-  }
-
-  // บันทึกแบบฟอร์ม -> ส่ง FormData ขึ้น backend (ตัวอย่าง)
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setMsg(null);
-    const err = validate();
-    if (err) {
-      setMsg({ type: "danger", text: err });
+  async function handleSubmit() {
+    if (myEnrollment) {
+      setMsg({ type: "warning", text: "คุณได้สมัครไปแล้ว" });
       return;
     }
 
-    // สร้าง FormData
-    const data = new FormData();
-
-    // เพิ่มฟิลด์ข้อความทั้งหมด
-    const skipFiles = [
-      'attachment_birth_certificate_file',
-      'attachment_reg_child_file',
-      'attachment_father_id_file',
-      'attachment_father_reg_file',
-      'attachment_mother_id_file',
-      'attachment_mother_reg_file'
-    ];
-    Object.keys(form).forEach((k) => {
-      if (skipFiles.includes(k)) return;
-      const v = form[k];
-      if (v !== null && v !== undefined) {
-        data.append(k, v);
-      }
-    });
-
-    // เพิ่มไฟล์จริงถ้ามี
-    if (form.attachment_birth_certificate_file) data.append('attachment_birth_certificate', form.attachment_birth_certificate_file);
-    if (form.attachment_reg_child_file) data.append('attachment_reg_child', form.attachment_reg_child_file);
-    if (form.attachment_father_id_file) data.append('attachment_father_id', form.attachment_father_id_file);
-    if (form.attachment_father_reg_file) data.append('attachment_father_reg', form.attachment_father_reg_file);
-    if (form.attachment_mother_id_file) data.append('attachment_mother_id', form.attachment_mother_id_file);
-    if (form.attachment_mother_reg_file) data.append('attachment_mother_reg', form.attachment_mother_reg_file);
-
     try {
-      // ตัวอย่างเรียก API: POST /api/enrollments
-      // หาก backend ยังไม่รองรับ การเรียกนี้จะโยน error — เราจัดการด้วยข้อความ
-      const res = await API.post('/enrollments', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const fd = new FormData();
+      fd.append("payload", JSON.stringify(form));
+
+      Object.entries(files).forEach(([k, f]) => {
+        if (f) fd.append(k, f);
       });
 
-      console.log('Enrollment saved response:', res.data);
-      setMsg({ type: 'success', text: 'บันทึกแบบฟอร์มเรียบร้อย' });
+      await API.post("/enrollments", fd);
 
-      // ถ้าต้องการ ล้าง draft หลังส่งสำเร็จ ให้เปิดบรรทัดถัดไป
-      // localStorage.removeItem('enrollDraft');
-      // setForm(initial);
+      setMsg({ type: "success", text: "สมัครเรียนเรียบร้อย" });
+      loadMyEnrollment();
     } catch (err) {
-      console.error('Enrollment save error:', err);
-      // หาก backend ยังไม่พร้อม ให้ยังแสดง success แบบ local (คุณบอกว่าเดโมได้)
-      setMsg({ type: 'danger', text: 'ส่งข้อมูลล้มเหลว (ตรวจสอบ backend) หรือทำงานแบบ offline' });
+      console.error(err);
+      setMsg({ type: "danger", text: "สมัครเรียนไม่สำเร็จ" });
     }
   }
 
-  function handlePreview() {
-    console.log("Preview enrollment data:", form);
-    alert("ดูตัวอย่างส่งออก: เปิด console ดูข้อมูล (Preview)");
-  }
-
-  function handleNext() {
-    setMsg(null);
-    const err = validate();
-    if (err) {
-      setMsg({ type: "danger", text: err });
-      return;
-    }
-    // บันทึก draft (effect จะบันทึกอัตโนมัติ แต่เซฟซ้ำอีกทีให้ชัวร์)
-    try {
-      const copy = { ...form };
-      delete copy.attachment_birth_certificate_file;
-      delete copy.attachment_reg_child_file;
-      delete copy.attachment_father_id_file;
-      delete copy.attachment_father_reg_file;
-      delete copy.attachment_mother_id_file;
-      delete copy.attachment_mother_reg_file;
-      localStorage.setItem('enrollDraft', JSON.stringify(copy));
-    } catch (e) {
-      console.warn('save before next failed', e);
-    }
-
-    // ไปหน้า Admission (ข้อมูลจะยังอยู่ใน localStorage)
-    navigate('/admission');
-  }
 
   return (
-    <div className="container my-4">
-      <h2 className="mb-3">แบบฟอร์มสมัครเข้าเรียน</h2>
+   <div className="container my-5" style={{ zIndex: 10 }}>
+      <h2 className="mb-4">แบบฟอร์มสมัครเข้าเรียน</h2>
 
-      {msg && (
-        <div className={`alert alert-${msg.type}`} role="alert">
-          {msg.text}
+      <Link to="/enrollments/my" className="btn btn-outline-primary mb-3">
+        ตรวจสอบสถานะการสมัคร
+      </Link>
+
+      {myEnrollment && (
+        <div className="alert alert-info">
+          สถานะการสมัคร: <b>{myEnrollment.status}</b>
+          {myEnrollment.status === "rejected" && (
+            <div className="text-danger mt-2">
+              เหตุผล: {myEnrollment.note}
+            </div>
+          )}
         </div>
       )}
+      {msg && (
+        <div className={`alert alert-${msg.type}`}>  {msg.text} </div> )}
 
-      <form onSubmit={handleSubmit}>
-        {/* — ข้อมูลเด็ก — */}
+      <form onSubmit={(e) => e.preventDefault()}>
+         {/* ================= ข้อมูลเด็ก ================= */}
+        <div className="card mb-3"><div className="card-body">
+          <h5>ข้อมูลเด็ก</h5>
+
+          <select className="form-select mb-2" name="apply_level" value={form.apply_level} onChange={onChange}>
+            <option value="">ชั้นที่สมัคร</option>
+            <option value="ต่ำกว่า 3 ปี">ต่ำกว่า 3 ปี</option>
+            <option value="อายุ 3 ปี">อายุ 3 ปี</option>
+          </select>
+
+          <select className="form-select mb-2" name="student_prefix" value={form.student_prefix} onChange={onChange}>
+            <option value="">คำนำหน้า</option>
+            <option value="เด็กชาย">เด็กชาย</option>
+            <option value="เด็กหญิง">เด็กหญิง</option>
+          </select>
+
+          <input className="form-control mb-2" name="student_firstname" value={form.student_firstname} onChange={onChange} placeholder="ชื่อเด็ก" />
+          <input className="form-control mb-2" name="student_lastname" value={form.student_lastname} onChange={onChange} placeholder="นามสกุลเด็ก" />
+          <input className="form-control mb-2" name="student_nickname" value={form.student_nickname} onChange={onChange} placeholder="ชื่อเล่น" />
+          <input className="form-control mb-2" name="student_idcard" value={form.student_idcard} onChange={onChange} placeholder="เลขบัตรประชาชน" />
+
+          <input type="date" className="form-control mb-2" name="birth_date" value={form.birth_date} onChange={onChange} />
+          <input className="form-control mb-2" name="birth_weight" value={form.birth_weight} onChange={onChange} placeholder="น้ำหนัก" />
+          <input className="form-control mb-2" name="birth_height" value={form.birth_height} onChange={onChange} placeholder="ส่วนสูง" />
+
+          <select className="form-select" name="oral_health" value={form.oral_health} onChange={onChange}>
+            <option value="">สุขภาพช่องปาก</option>
+            <option value="ฟันผุ">ฟันผุ</option>
+            <option value="ฟันไม่ผุ">ฟันไม่ผุ</option>
+          </select>
+        </div></div>
+       {/* ================= ที่อยู่เด็ก ================= */}
+        <div className="card mb-3"><div className="card-body">
+          <h5>ที่อยู่เด็ก</h5>
+
+          <h6>ทะเบียนบ้าน</h6>
+          <input className="form-control mb-2" name="reg_house_no" value={form.reg_house_no} onChange={onChange} placeholder="บ้านเลขที่" />
+          <input className="form-control mb-2" name="reg_moo" value={form.reg_moo} onChange={onChange} placeholder="หมู่" />
+          <input className="form-control mb-2" name="reg_tambon" value={form.reg_tambon} onChange={onChange} placeholder="ตำบล" />
+          <input className="form-control mb-2" name="reg_amphur" value={form.reg_amphur} onChange={onChange} placeholder="อำเภอ" />
+          <input className="form-control mb-2" name="reg_province" value={form.reg_province} onChange={onChange} placeholder="จังหวัด" />
+
+          <div className="form-check mb-2">
+            <input className="form-check-input" type="checkbox" onChange={(e)=>e.target.checked && setForm(s=>({
+              ...s,
+              curr_house_no:s.reg_house_no,
+              curr_moo:s.reg_moo,
+              curr_tambon:s.reg_tambon,
+              curr_amphur:s.reg_amphur,
+              curr_province:s.reg_province
+            }))}/>
+            <label className="form-check-label">ที่อยู่ปัจจุบันเหมือนทะเบียนบ้าน</label>
+          </div>
+
+          <h6>ที่อยู่ปัจจุบัน</h6>
+          <input className="form-control mb-2" name="curr_house_no" value={form.curr_house_no} onChange={onChange}placeholder="บ้านเลขที่" />
+          <input className="form-control mb-2" name="curr_moo" value={form.curr_moo} onChange={onChange} placeholder="หมู่" />
+          <input className="form-control mb-2" name="curr_tambon" value={form.curr_tambon} onChange={onChange} placeholder="ตำบล"/>
+          <input className="form-control mb-2" name="curr_amphur" value={form.curr_amphur} onChange={onChange}  placeholder="อำเภอ"/>
+          <input className="form-control mb-2" name="curr_province" value={form.curr_province} onChange={onChange} placeholder="จังหวัด"/>
+        </div></div>
+
+        {/* ================= มารดา ================= */}
         <div className="card mb-3">
           <div className="card-body">
-            <h5 className="card-title">ข้อมูลเด็ก</h5>
+            <h5>ข้อมูลมารดา</h5>
+             <select
+      className="form-select mb-2"
+      name="mother_prefix"
+      value={form.mother_prefix}
+      onChange={onChange}
+    >
+      <option value="">คำนำหน้า</option>
+      <option value="นาง">นาง</option>
+      <option value="นางสาว">นางสาว</option>
+    </select>
+            <input className="form-control mb-2" name="mother_firstname" value={form.mother_firstname} onChange={onChange} placeholder="ชื่อแม่" />
+            <input className="form-control mb-2" name="mother_lastname" value={form.mother_lastname} onChange={onChange} placeholder="นามสกุลแม่" />
+            <input className="form-control mb-2" name="mother_idcard" value={form.mother_idcard} onChange={onChange} placeholder="เลขบัตรประชาชน" />
+            <input type="date" className="form-control mb-2" name="mother_birthdate" value={form.mother_birthdate} onChange={onChange} />
+            <h6 className="mt-3">ที่อยู่ตามทะเบียนบ้าน (มารดา)</h6>
+            <input className="form-control mb-2" name="mother_reg_house_no" value={form.mother_reg_house_no} onChange={onChange} placeholder="บ้านเลขที่" />
+            <input className="form-control mb-2" name="mother_reg_moo" value={form.mother_reg_moo} onChange={onChange} placeholder="หมู่" />
+            <input className="form-control mb-2" name="mother_reg_tambon" value={form.mother_reg_tambon} onChange={onChange} placeholder="ตำบล" />
+            <input className="form-control mb-2" name="mother_reg_amphur" value={form.mother_reg_amphur} onChange={onChange} placeholder="อำเภอ" />
+            <input className="form-control mb-2" name="mother_reg_province" value={form.mother_reg_province} onChange={onChange} placeholder="จังหวัด" />
+            <div className="form-check mb-2">
+            <input className="form-check-input" type="checkbox" onChange={(e)=>e.target.checked && setForm(s=>({
+              ...s,
+              mother_curr_house_no: s.mother_reg_house_no,
+              mother_curr_moo: s.mother_reg_moo,
+              mother_curr_tambon: s.mother_reg_tambon,
+              mother_curr_amphur: s.mother_reg_amphur,
+              mother_curr_province: s.mother_reg_province
+            }))}/>
+            <label className="form-check-label">ที่อยู่ปัจจุบันเหมือนทะเบียนบ้าน</label>
+          </div>
+            <h6 className="mt-3">ที่อยู่ปัจจุบัน (มารดา)</h6>
+            <input className="form-control mb-2" name="mother_curr_house_no" value={form.mother_curr_house_no} onChange={onChange} placeholder="บ้านเลขที่" />
+            <input className="form-control mb-2" name="mother_curr_moo" value={form.mother_curr_moo} onChange={onChange} placeholder="หมู่" />
+            <input className="form-control mb-2" name="mother_curr_tambon" value={form.mother_curr_tambon} onChange={onChange} placeholder="ตำบล" />
+            <input className="form-control mb-2" name="mother_curr_amphur" value={form.mother_curr_amphur} onChange={onChange} placeholder="อำเภอ" />
+            <input className="form-control mb-2" name="mother_curr_province" value={form.mother_curr_province} onChange={onChange} placeholder="จังหวัด" />
 
-            <div className="row g-3">
-              <div className="col-md-4">
-                <label className="form-label">ชั้นที่สมัครเข้าเรียน</label>
-                <select className="form-select" name="apply_level" value={form.apply_level} onChange={onChange}>
-                  <option value="">-- เลือก --</option>
-                  <option value="ต่ำกว่า 3 ขวบ">ต่ำกว่า 3 ขวบ</option>
-                  <option value="อายุ 3 ขวบ">อายุ 3 ขวบ</option>
-                </select>
-              </div>
-
-              <div className="col-md-2">
-                <label className="form-label">คำนำหน้า</label>
-                <select className="form-select" name="student_prefix" value={form.student_prefix} onChange={onChange}>
-                  <option value="">เลือก</option>
-                  <option value="เด็กชาย">เด็กชาย</option>
-                  <option value="เด็กหญิง">เด็กหญิง</option>
-                </select>
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label">ชื่อ</label>
-                <input className="form-control" name="student_firstname" value={form.student_firstname} onChange={onChange} />
-              </div>
-              <div className="col-md-4">
-                <label className="form-label">นามสกุล</label>
-                <input className="form-control" name="student_lastname" value={form.student_lastname} onChange={onChange} />
-              </div>
-
-              <div className="col-md-3">
-                <label className="form-label">ชื่อเล่น</label>
-                <input className="form-control" name="student_nickname" value={form.student_nickname} onChange={onChange} />
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label">เลขบัตรประชาชน</label>
-                <input className="form-control" name="student_idcard" value={form.student_idcard} onChange={onChange} placeholder="13 หลัก (ถ้ามี)" />
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label">วัน/เดือน/ปีเกิด</label>
-                <input className="form-control" type="date" name="birth_date" value={form.birth_date} onChange={onChange} />
-              </div>
-
-              <div className="col-md-2">
-                <label className="form-label">น้ำหนัก (kg)</label>
-                <input className="form-control" name="birth_weight" value={form.birth_weight} onChange={onChange} />
-              </div>
-              <div className="col-md-2">
-                <label className="form-label">ส่วนสูง (cm)</label>
-                <input className="form-control" name="birth_height" value={form.birth_height} onChange={onChange} />
-              </div>
-
-              <div className="col-md-4">
-                <label className="form-label">สุขภาพช่องปาก</label>
-                <select className="form-select" name="oral_health" value={form.oral_health} onChange={onChange}>
-                  <option value="">เลือก</option>
-                  <option value="ฟันผุ">ฟันผุ</option>
-                  <option value="ฟันไม่ผุ">ฟันไม่ผุ</option>
-                </select>
-              </div>
-
-              <div className="col-12">
-                <label className="form-label">ที่อยู่ตามสำเนาทะเบียนบ้าน</label>
-                <div className="row g-2">
-                  <div className="col-md-2"><input className="form-control" name="reg_house_no" placeholder="บ้านเลขที่" value={form.reg_house_no} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="reg_moo" placeholder="หมู่ที่" value={form.reg_moo} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="reg_tambon" placeholder="ตำบล" value={form.reg_tambon} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="reg_amphur" placeholder="อำเภอ" value={form.reg_amphur} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="reg_province" placeholder="จังหวัด" value={form.reg_province} onChange={onChange} /></div>
-                </div>
-              </div>
-
-              <div className="col-12">
-                <label className="form-label">ที่อยู่ปัจจุบัน</label>
-                <div className="row g-2">
-                  <div className="col-md-2"><input className="form-control" name="curr_house_no" placeholder="บ้านเลขที่" value={form.curr_house_no} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="curr_moo" placeholder="หมู่ที่" value={form.curr_moo} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="curr_tambon" placeholder="ตำบล" value={form.curr_tambon} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="curr_amphur" placeholder="อำเภอ" value={form.curr_amphur} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="curr_province" placeholder="จังหวัด" value={form.curr_province} onChange={onChange} /></div>
-                </div>
-              </div>
-            </div>
+            <input className="form-control mb-2" name="mother_phone" value={form.mother_phone} onChange={onChange} placeholder="โทรศัพท์" />
+            <input className="form-control mb-2" name="mother_job" value={form.mother_job} onChange={onChange} placeholder="อาชีพ" />
+            <input className="form-control" name="mother_income" value={form.mother_income} onChange={onChange} placeholder="รายได้ต่อเดือน" />
           </div>
         </div>
 
-        {/* — ข้อมูลมารดา — */}
+        {/* ================= บิดา ================= */}
         <div className="card mb-3">
           <div className="card-body">
-            <h5 className="card-title">ข้อมูลมารดา</h5>
-            <div className="row g-3">
-              <div className="col-md-2">
-                <label className="form-label">คำนำหน้า</label>
-                  <select className="form-select" name="mother_prefix" value={form.mother_prefix} onChange={onChange}>
-                    <option value="">เลือก</option>
-                    <option value="นาง">นาง</option>
-                    <option value="นางสาว">นางสาว</option>
-                  </select>
-                  </div>
-              <div className="col-md-4"><label className="form-label">ชื่อ</label><input className="form-control" name="mother_name" value={form.mother_name} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">นามสกุล</label><input className="form-control" name="mother_lastname" value={form.mother_lastname} onChange={onChange} /></div>
-              <div className="col-md-2"><label className="form-label">เลขบัตร</label><input className="form-control" name="mother_idcard" value={form.mother_idcard} onChange={onChange} /></div>
+            <h5>ข้อมูลบิดา</h5>
+            {/* คำนำหน้าพ่อ */}
+    <select
+      className="form-select mb-2"
+      name="father_prefix"
+      value={form.father_prefix}
+      onChange={onChange}
+    >
+      <option value="">คำนำหน้า</option>
+      <option value="นาย">นาย</option>
+    </select>
+            <input className="form-control mb-2" name="father_firstname" value={form.father_firstname} onChange={onChange} placeholder="ชื่อพ่อ" />
+            <input className="form-control mb-2" name="father_lastname" value={form.father_lastname} onChange={onChange} placeholder="นามสกุลพ่อ" />
+            <input className="form-control mb-2" name="father_idcard" value={form.father_idcard} onChange={onChange} placeholder="เลขบัตรประชาชน" />
+            <input type="date" className="form-control mb-2" name="father_birthdate" value={form.father_birthdate} onChange={onChange} />
+            <h6 className="mt-3">ที่อยู่ตามทะเบียนบ้าน (บิดา)</h6>
+            <input className="form-control mb-2" name="father_reg_house_no" value={form.father_reg_house_no} onChange={onChange} placeholder="บ้านเลขที่" />
+            <input className="form-control mb-2" name="father_reg_moo" value={form.father_reg_moo} onChange={onChange} placeholder="หมู่" />
+            <input className="form-control mb-2" name="father_reg_tambon" value={form.father_reg_tambon} onChange={onChange} placeholder="ตำบล" />
+            <input className="form-control mb-2" name="father_reg_amphur" value={form.father_reg_amphur} onChange={onChange} placeholder="อำเภอ" />
+            <input className="form-control mb-2" name="father_reg_province" value={form.father_reg_province} onChange={onChange} placeholder="จังหวัด" />
+            <div className="form-check mb-2">
+            <input className="form-check-input" type="checkbox" onChange={(e)=>e.target.checked && setForm(s=>({
+              ...s,
+              father_curr_house_no: s.father_reg_house_no,
+              father_curr_moo: s.father_reg_moo,
+              father_curr_tambon: s.father_reg_tambon,
+              father_curr_amphur: s.father_reg_amphur,
+              father_curr_province: s.father_reg_province
+            }))}/>
+            <label className="form-check-label">ที่อยู่ปัจจุบันเหมือนทะเบียนบ้าน</label>
+          </div>
+            <h6 className="mt-3">ที่อยู่ปัจจุบัน (บิดา)</h6>
+            <input className="form-control mb-2" name="father_curr_house_no" value={form.father_curr_house_no} onChange={onChange} placeholder="บ้านเลขที่" />
+            <input className="form-control mb-2" name="father_curr_moo" value={form.father_curr_moo} onChange={onChange} placeholder="หมู่" />
+            <input className="form-control mb-2" name="father_curr_tambon" value={form.father_curr_tambon} onChange={onChange} placeholder="ตำบล" />
+            <input className="form-control mb-2" name="father_curr_amphur" value={form.father_curr_amphur} onChange={onChange} placeholder="อำเภอ" />
+        <input className="form-control mb-2" name="father_curr_province" value={form.father_curr_province} onChange={onChange} placeholder="จังหวัด" />
 
-              <div className="col-md-4"><label className="form-label">วัน/เดือน/ปีเกิด</label><input type="date" className="form-control" name="mother_birthdate" value={form.mother_birthdate} onChange={onChange} /></div>
-
-              <div className="col-12"><label className="form-label">ที่อยู่ตามทะเบียนบ้าน</label>
-                <div className="row g-2">
-                  <div className="col-md-2"><input className="form-control" name="mother_reg_house_no" placeholder="บ้านเลขที่" value={form.mother_reg_house_no} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="mother_reg_moo" placeholder="หมู่ที่" value={form.mother_reg_moo} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="mother_reg_tambon" placeholder="ตำบล" value={form.mother_reg_tambon} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="mother_reg_amphur" placeholder="อำเภอ" value={form.mother_reg_amphur} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="mother_reg_province" placeholder="จังหวัด" value={form.mother_reg_province} onChange={onChange} /></div>
-                </div>
-              </div>
-
-              <div className="col-12"><label className="form-label">ที่อยู่ปัจจุบัน</label>
-                <div className="row g-2">
-                  <div className="col-md-2"><input className="form-control" name="mother_curr_house_no" placeholder="บ้านเลขที่" value={form.mother_curr_house_no} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="mother_curr_moo" placeholder="หมู่ที่" value={form.mother_curr_moo} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="mother_curr_tambon" placeholder="ตำบล" value={form.mother_curr_tambon} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="mother_curr_amphur" placeholder="อำเภอ" value={form.mother_curr_amphur} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="mother_curr_province" placeholder="จังหวัด" value={form.mother_curr_province} onChange={onChange} /></div>
-                </div>
-              </div>
-
-              <div className="col-md-4"><label className="form-label">มือถือ</label><input className="form-control" name="mother_phone" value={form.mother_phone} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">อีเมล</label><input className="form-control" name="mother_email" value={form.mother_email} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">อาชีพ</label><input className="form-control" name="mother_job" value={form.mother_job} onChange={onChange} placeholder="" /></div>
-              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="mother_income" value={form.mother_selaly} onChange={onChange} placeholder="" /></div>
-            </div>
+            <input className="form-control mb-2" name="father_phone" value={form.father_phone} onChange={onChange} placeholder="โทรศัพท์" />
+            <input className="form-control mb-2" name="father_job" value={form.father_job} onChange={onChange} placeholder="อาชีพ" />
+            <input className="form-control" name="father_income" value={form.father_income} onChange={onChange} placeholder="รายได้ต่อเดือน" />
           </div>
         </div>
+<div className="card mb-3">
+  <div className="card-body">
+    <h5>ปัจจุบันเด็กอยู่ในความดูแลอุปการะรับผิดชอบของ</h5>
 
-        {/* — ข้อมูลบิดา — */}
+    {/* ผู้ดูแลเป็นใคร */}
+    <select
+      className="form-select mb-2"
+      name="care_responsible"
+      value={form.care_responsible}
+      onChange={onChange}
+    >
+      <option value="">-- เลือก --</option>
+      <option value="บิดา">บิดา</option>
+      <option value="มารดา">มารดา</option>
+      <option value="บิดาและมารดา">บิดาและมารดา</option>
+      <option value="ญาติ">ญาติ</option>
+      <option value="อื่น ๆ">อื่น ๆ</option>
+    </select>
+
+    {/* คำนำหน้า */}
+    <select
+      className="form-select mb-2"
+      name="caregiver_prefix"
+      value={form.caregiver_prefix}
+      onChange={onChange}
+    >
+      <option value="">คำนำหน้า</option>
+      <option value="นาย">นาย</option>
+      <option value="นาง">นาง</option>
+      <option value="นางสาว">นางสาว</option>
+    </select>
+
+    {/* ชื่อ */}
+    <input
+      className="form-control mb-2"
+      name="caregiver_firstname"
+      value={form.caregiver_firstname}
+      onChange={onChange}
+      placeholder="ชื่อผู้อุปการะ"
+    />
+
+    {/* นามสกุล */}
+    <input
+      className="form-control mb-2"
+      name="caregiver_lastname"
+      value={form.caregiver_lastname}
+      onChange={onChange}
+      placeholder="นามสกุลผู้อุปการะ"
+    />
+
+    {/* อาชีพ */}
+    <input
+      className="form-control mb-2"
+      name="caregiver_job"
+      value={form.caregiver_job}
+      onChange={onChange}
+      placeholder="อาชีพผู้อุปการะ"
+    />
+
+    {/* รายได้ */}
+    <input
+      className="form-control mb-2"
+      name="caregiver_income"
+      value={form.caregiver_income}
+      onChange={onChange}
+      placeholder="รายได้ต่อเดือน"
+    />
+
+    {/* โทรศัพท์ */}
+    <input
+      className="form-control"
+      name="caregiver_phone"
+      value={form.caregiver_phone}
+      onChange={onChange}
+      placeholder="หมายเลขโทรศัพท์"
+    />
+  </div>
+</div>
+
+
+        {/* ================= ผู้รับส่ง ================= */}
         <div className="card mb-3">
           <div className="card-body">
-            <h5 className="card-title">ข้อมูลบิดา</h5>
-            <div className="row g-3">
-              <div className="col-md-2">
-              <label className="form-label">คำนำหน้า</label>
-              <select className="form-select" name="sender_prefix" value={form.sender_prefix} onChange={onChange}>
-              <option value="">เลือก</option>
-              <option value="นาย">นาย</option>
-              </select>
-            </div>
-              <div className="col-md-4"><label className="form-label">ชื่อ</label><input className="form-control" name="father_name" value={form.father_name} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">นามสกุล</label><input className="form-control" name="father_lastname" value={form.father_lastname} onChange={onChange} /></div>
-              <div className="col-md-2"><label className="form-label">เลขบัตร</label><input className="form-control" name="father_idcard" value={form.father_idcard} onChange={onChange} /></div>
-
-              <div className="col-md-4"><label className="form-label">วัน/เดือน/ปีเกิด</label><input type="date" className="form-control" name="father_birthdate" value={form.father_birthdate} onChange={onChange} /></div>
-
-              <div className="col-12"><label className="form-label">ที่อยู่ตามทะเบียนบ้าน</label>
-                <div className="row g-2">
-                  <div className="col-md-2"><input className="form-control" name="father_reg_house_no" placeholder="บ้านเลขที่" value={form.father_reg_house_no} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="father_reg_moo" placeholder="หมู่ที่" value={form.father_reg_moo} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="father_reg_tambon" placeholder="ตำบล" value={form.father_reg_tambon} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="father_reg_amphur" placeholder="อำเภอ" value={form.father_reg_amphur} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="father_reg_province" placeholder="จังหวัด" value={form.father_reg_province} onChange={onChange} /></div>
-                </div>
-              </div>
-
-              <div className="col-12"><label className="form-label">ที่อยู่ปัจจุบัน</label>
-                <div className="row g-2">
-                  <div className="col-md-2"><input className="form-control" name="father_curr_house_no" placeholder="บ้านเลขที่" value={form.father_curr_house_no} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="father_curr_moo" placeholder="หมู่ที่" value={form.father_curr_moo} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="father_curr_tambon" placeholder="ตำบล" value={form.father_curr_tambon} onChange={onChange} /></div>
-                  <div className="col-md-3"><input className="form-control" name="father_curr_amphur" placeholder="อำเภอ" value={form.father_curr_amphur} onChange={onChange} /></div>
-                  <div className="col-md-2"><input className="form-control" name="father_curr_province" placeholder="จังหวัด" value={form.father_curr_province} onChange={onChange} /></div>
-                </div>
-              </div>
-
-              <div className="col-md-4"><label className="form-label">มือถือ</label><input className="form-control" name="father_phone" value={form.father_phone} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">อีเมล</label><input className="form-control" name="father_email" value={form.father_email} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">อาชีพ</label><input className="form-control" name="father_job" value={form.father_job} onChange={onChange} placeholder="" /></div>
-              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="father_income" value={form.father_selaly} onChange={onChange} placeholder="" /></div>
-            </div>
+            <h5>ผู้รับส่งเด็ก</h5>
+             <select
+      className="form-select mb-2"
+      name="sender_prefix"
+      value={form.sender_prefix}
+      onChange={onChange}
+      >
+      <option value="">คำนำหน้า</option>
+      <option value="นาย">นาย</option>
+      <option value="นาง">นาง</option>
+      <option value="นางสาว">นางสาว</option>
+      </select>
+            <input className="form-control mb-2" name="sender_firstname" value={form.sender_firstname} onChange={onChange} placeholder="ชื่อ" />
+            <input className="form-control mb-2" name="sender_lastname" value={form.sender_lastname} onChange={onChange} placeholder="นามสกุล" />
+            <input className="form-control mb-2" name="sender_relation" value={form.sender_relation} onChange={onChange} placeholder="ความสัมพันธ์" />
+            <input className="form-control" name="sender_phone" value={form.sender_phone} onChange={onChange} placeholder="โทรศัพท์" />
           </div>
         </div>
-
-        {/* — ปัจจุบันเด็กอยู่ในความดูแล/รับผิดชอบของ — */}
+        {/* ================= เอกสารแนบ ================= */}
         <div className="card mb-3">
           <div className="card-body">
-            <h5 className="card-title">ปัจจุบันเด็กอยู่ในความดูแล/รับผิดชอบของ</h5>
+            <h5>เอกสารประกอบการสมัคร</h5>
 
-            <div className="mb-2">
-              <select className="form-select" name="care_responsible" value={form.care_responsible} onChange={onChange}>
-                <option value="">-- เลือก --</option>
-                <option value="บิดา">บิดา</option>
-                <option value="มารดา">มารดา</option>
-                <option value="ทั้งบิดา-มารดา">ทั้งบิดา-มารดา</option>
-                <option value="ญาติ">ญาติ</option>
-              </select>
-            </div>
+            <label className="form-label">สำเนาสูติบัตรเด็ก</label>
+            <input type="file" className="form-control mb-2" name="child_birth_certificate" onChange={onFileChange} />
 
-            <div className="row g-3">
-              <div className="col-md-4"><label className="form-label">อาชีพผู้อุปการะ</label><input className="form-control" name="caregiver_job" value={form.caregiver_job} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">รายได้ต่อเดือน</label><input className="form-control" name="caregiver_income" value={form.caregiver_income} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">หมายเลขโทรศัพท์</label><input className="form-control" name="caregiver_phone" value={form.caregiver_phone} onChange={onChange} /></div>
-            </div>
+            <label className="form-label">สำเนาทะเบียนบ้านเด็ก</label>
+            <input type="file" className="form-control mb-2" name="child_house_reg" onChange={onFileChange} />
+
+            <label className="form-label">สำเนาบัตรประชาชนบิดา</label>
+            <input type="file" className="form-control mb-2" name="father_idcard_file" onChange={onFileChange} />
+
+            <label className="form-label">สำเนาทะเบียนบ้านบิดา</label>
+            <input type="file" className="form-control mb-2" name="father_house_reg" onChange={onFileChange} />
+
+            <label className="form-label">สำเนาบัตรประชาชนมารดา</label>
+            <input type="file" className="form-control mb-2" name="mother_idcard_file" onChange={onFileChange} />
+
+            <label className="form-label">สำเนาทะเบียนบ้านมารดา</label>
+            <input type="file" className="form-control mb-2" name="mother_house_reg" onChange={onFileChange} />
           </div>
         </div>
-
-        {/* — ผู้ที่รับส่งเด็ก — */}
-        <div className="card mb-3">
-          <div className="card-body">
-            <h5 className="card-title">ผู้ที่รับส่งเด็ก</h5>
-            <div className="row g-3">
-              <div className="col-md-2">
-              <label className="form-label">คำนำหน้า</label>
-              <select className="form-select" name="father_prefix" value={form.father_prefix} onChange={onChange}>
-              <option value="">เลือก</option>
-              <option value="นาย">นาย</option>
-              <option value="นาง">นาง</option>
-              <option value="นางสาว">นางสาว</option>  
-              </select>
-            </div>
-              <div className="col-md-4"><label className="form-label">ชื่อ</label><input className="form-control" name="sender_name" value={form.sender_name} onChange={onChange} /></div>
-              <div className="col-md-4"><label className="form-label">นามสกุล</label><input className="form-control" name="sender_lastname" value={form.sender_lastname} onChange={onChange} /></div>
-              <div className="col-md-2"><label className="form-label">ความเกี่ยวข้อง</label><input className="form-control" name="sender_relation" value={form.sender_relation} onChange={onChange} /></div>
-
-              <div className="col-md-4"><label className="form-label">หมายเลขโทรศัพท์</label><input className="form-control" name="sender_phone" value={form.sender_phone} onChange={onChange} /></div>
-            </div>
-          </div>
-        </div>
-
-        {/* — แนบไฟล์ 6 รายการ — */}
-        <div className="card mb-3">
-          <div className="card-body">
-            <h5 className="card-title">แนบเอกสาร (แสดงชื่อไฟล์เท่านั้น)</h5>
-
-            <div className="mb-3">
-              <label className="form-label">1. สำเนาสูติบัตรเด็ก</label>
-              <input type="file" name="attachment_birth_certificate" className="form-control" onChange={onFile} />
-              {form.attachment_birth_certificate && <div className="form-text">ไฟล์ที่เลือก: {form.attachment_birth_certificate}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">2. สำเนาทะเบียนบ้านเด็ก</label>
-              <input type="file" name="attachment_reg_child" className="form-control" onChange={onFile} />
-              {form.attachment_reg_child && <div className="form-text">ไฟล์ที่เลือก: {form.attachment_reg_child}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">3. สำเนาบัตรประชาชนพ่อ</label>
-              <input type="file" name="attachment_father_id" className="form-control" onChange={onFile} />
-              {form.attachment_father_id && <div className="form-text">ไฟล์ที่เลือก: {form.attachment_father_id}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">4. สำเนาทะเบียนบ้านพ่อ</label>
-              <input type="file" name="attachment_father_reg" className="form-control" onChange={onFile} />
-              {form.attachment_father_reg && <div className="form-text">ไฟล์ที่เลือก: {form.attachment_father_reg}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">5. สำเนาบัตรประชาชนแม่</label>
-              <input type="file" name="attachment_mother_id" className="form-control" onChange={onFile} />
-              {form.attachment_mother_id && <div className="form-text">ไฟล์ที่เลือก: {form.attachment_mother_id}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label className="form-label">6. สำเนาทะเบียนบ้านแม่</label>
-              <input type="file" name="attachment_mother_reg" className="form-control" onChange={onFile} />
-              {form.attachment_mother_reg && <div className="form-text">ไฟล์ที่เลือก: {form.attachment_mother_reg}</div>}
-            </div>
-
-          </div>
-        </div>
-
-        {/* ปุ่ม: บันทึกแบบฟอร์ม และ ถัดไป */}
-        <div className="mb-5">
-          <button type="submit" className="btn btn-primary">บันทึกแบบฟอร์ม</button>
-          <button type="button" className="btn btn-success ms-2" onClick={handleNext}>ถัดไป</button>
-          <button type="button" className="btn btn-outline-danger ms-2" onClick={() => { localStorage.removeItem('enrollDraft'); setForm(initial); setMsg(null); }}>ล้างฟอร์ม</button>
-        </div>
+              <div className="d-flex justify-content-center mb-5">
+  <button
+    type="button"
+    className="btn btn-success btn-lg"
+    onClick={handleSubmit}
+  >
+    สมัครเรียน
+  </button>
+  
+</div>
+            
       </form>
     </div>
   );

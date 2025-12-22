@@ -1,49 +1,50 @@
-// src/pages/Register.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 
 export default function Register() {
   const navigate = useNavigate();
 
+  const [centers, setCenters] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
+
   const [form, setForm] = useState({
-    username: "",
-    password: "",
+    center_id: "",
     prefix: "",
     first_name: "",
     last_name: "",
     phone: "",
-    email: ""
+    email: "",
+    username: "",
+    password: ""
   });
 
-  const [msg, setMsg] = useState(null);
-  const [loading, setLoading] = useState(false);
+  /* ================= โหลดรายชื่อศูนย์ ================= */
+  useEffect(() => {
+    API.get("/centers")
+      .then(res => setCenters(res.data))
+      .catch(() =>
+        setMsg({ type: "danger", text: "โหลดข้อมูลศูนย์ไม่สำเร็จ" })
+      );
+  }, []);
 
   function onChange(e) {
     const { name, value } = e.target;
-    setForm((s) => ({ ...s, [name]: value }));
+    setForm(s => ({ ...s, [name]: value }));
   }
 
   function validate() {
-    if (!form.username || form.username.trim().length < 3) {
-      return "กรุณากรอก username อย่างน้อย 3 ตัวอักษร";
-    }
-    if (!form.password || form.password.length < 4) {
-      return "กรุณากรอก password อย่างน้อย 4 ตัวอักษร";
-    }
-    if (!form.first_name || !form.last_name) {
-      return "กรุณากรอกชื่อ-สกุล";
-    }
-    // (ไม่บังคับ) ตรวจเบอร์/อีเมลแบบง่าย ๆ
-    if (form.phone && !/^[0-9\-\s+()]{6,20}$/.test(form.phone)) {
-      return "รูปแบบหมายเลขโทรศัพท์ดูผิด (ใช้ตัวเลขและ - หรือเว้นวรรคเท่านั้น)";
-    }
-    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
-      return "รูปแบบอีเมลไม่ถูกต้อง";
-    }
+    if (!form.center_id) return "กรุณาเลือกศูนย์เด็กเล็ก";
+    if (!form.first_name || !form.last_name) return "กรุณากรอกชื่อ-สกุล";
+    if (!form.username || form.username.length < 3)
+      return "username อย่างน้อย 3 ตัวอักษร";
+    if (!form.password || form.password.length < 4)
+      return "password อย่างน้อย 4 ตัวอักษร";
     return null;
   }
 
+  /* ================= สมัครสมาชิก ================= */
   async function handleSubmit(e) {
     e.preventDefault();
     setMsg(null);
@@ -56,32 +57,17 @@ export default function Register() {
 
     setLoading(true);
     try {
-      // payload ตามที่ backend ปรับไว้
-      const payload = {
-        username: form.username,
-        password: form.password,
-        prefix: form.prefix || null,
-        first_name: form.first_name,
-        last_name: form.last_name,
-        phone: form.phone || null,
-        email: form.email || null
-      };
-
-      const res = await API.post("/auth/register", payload);
-      // ถ้า backend คืนค่าดี -> redirect ไปหน้า login (หรือแสดงข้อความ)
-      setMsg({ type: "success", text: "สมัครสมาชิกสำเร็จแล้ว! กรุณาเข้าสู่ระบบ" });
-      // ไปหน้า login
+      await API.post("/auth/register", form);
+      setMsg({ type: "success", text: "สมัครสมาชิกสำเร็จ" });
       navigate("/login");
     } catch (err) {
-      console.error("register error:", err);
-
-      // พยายามอ่านข้อความจาก response
-      const serverMsg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        (err?.message ? err.message : null);
-
-      setMsg({ type: "danger", text: serverMsg || "สมัครสมาชิกล้มเหลว" });
+      setMsg({
+        type: "danger",
+        text:
+          err.response?.data?.error ||
+          err.response?.data?.message ||
+          "สมัครสมาชิกไม่สำเร็จ"
+      });
     } finally {
       setLoading(false);
     }
@@ -89,7 +75,7 @@ export default function Register() {
 
   return (
     <div className="container my-4" style={{ maxWidth: 720 }}>
-      <h2 className="mb-3">สมัครสมาชิก (สำหรับผู้ปกครอง)</h2>
+      <h2 className="mb-3">สมัครสมาชิกผู้ปกครอง</h2>
 
       {msg && (
         <div className={`alert alert-${msg.type}`} role="alert">
@@ -98,60 +84,124 @@ export default function Register() {
       )}
 
       <form onSubmit={handleSubmit}>
+        {/* ===== เลือกศูนย์ ===== */}
+        <div className="mb-3">
+          <label className="form-label">ศูนย์เด็กเล็ก</label>
+          <select
+            name="center_id"
+            className="form-select"
+            value={form.center_id}
+            onChange={onChange}
+            required
+          >
+            <option value="">-- เลือกศูนย์ --</option>
+            {centers.map(c => (
+              <option key={c.center_id} value={c.center_id}>
+                {c.name}
+            </option>
+            ))}
+          </select>
+        </div>
+
         <div className="row g-3">
           <div className="col-md-4">
-  <label className="form-label">คำนำหน้า</label>
-  <select
-    name="prefix"
-    className="form-select"
-    value={form.prefix}
-    onChange={onChange}
-    required
-  >
-    <option value="">-- เลือกคำนำหน้า --</option>
-    <option value="นาย">นาย</option>
-    <option value="นางสาว">นางสาว</option>
-    <option value="นาง">นาง</option>
-  </select>
-</div>
-
+            <label className="form-label">คำนำหน้า</label>
+            <select
+              name="prefix"
+              className="form-select"
+              value={form.prefix}
+              onChange={onChange}
+            >
+              <option value="">-- เลือก --</option>
+              <option value="นาย">นาย</option>
+              <option value="นางสาว">นางสาว</option>
+              <option value="นาง">นาง</option>
+            </select>
+          </div>
 
           <div className="col-md-4">
             <label className="form-label">ชื่อ</label>
-            <input name="first_name" className="form-control" value={form.first_name} onChange={onChange} required />
+            <input
+              name="first_name"
+              className="form-control"
+              value={form.first_name}
+              onChange={onChange}
+              required
+            />
           </div>
 
           <div className="col-md-4">
             <label className="form-label">นามสกุล</label>
-            <input name="last_name" className="form-control" value={form.last_name} onChange={onChange} required />
+            <input
+              name="last_name"
+              className="form-control"
+              value={form.last_name}
+              onChange={onChange}
+              required
+            />
           </div>
 
           <div className="col-md-6">
-            <label className="form-label">หมายเลขโทรศัพท์</label>
-            <input name="phone" className="form-control" value={form.phone} onChange={onChange} placeholder="0x-xxx-xxxx " />
+            <label className="form-label">เบอร์โทรศัพท์</label>
+            <input
+              name="phone"
+              className="form-control"
+              value={form.phone}
+              onChange={onChange}
+            />
           </div>
 
           <div className="col-md-6">
             <label className="form-label">อีเมล</label>
-            <input name="email" type="email" className="form-control" value={form.email} onChange={onChange} placeholder="you@example.com " />
+            <input
+              name="email"
+              type="email"
+              className="form-control"
+              value={form.email}
+              onChange={onChange}
+            />
           </div>
 
           <div className="col-md-6">
             <label className="form-label">Username</label>
-            <input name="username" className="form-control" value={form.username} onChange={onChange} required />
+            <input
+              name="username"
+              className="form-control"
+              value={form.username}
+              onChange={onChange}
+              required
+            />
           </div>
 
           <div className="col-md-6">
             <label className="form-label">Password</label>
-            <input name="password" type="password" className="form-control" value={form.password} onChange={onChange} required />
+            <input
+              name="password"
+              type="password"
+              className="form-control"
+              value={form.password}
+              onChange={onChange}
+              required
+            />
           </div>
         </div>
 
         <div className="mt-4">
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+          >
             {loading ? "กำลังสมัคร..." : "สมัครสมาชิก"}
           </button>
-          <button type="button" className="btn btn-link ms-3" onClick={() => navigate("/login")}>ไปหน้าล็อกอิน</button>
+
+          <button
+            type="button"
+            className="btn btn-link ms-3"
+            onClick={() => navigate("/login")}
+          >
+            ไปหน้าเข้าสู่ระบบ
+          </button>
         </div>
       </form>
     </div>

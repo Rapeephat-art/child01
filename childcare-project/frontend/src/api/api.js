@@ -1,6 +1,5 @@
 // src/api/api.js
 import axios from 'axios';
-
 /*
   Axios instance for frontend API calls.
   - อ่าน baseURL จาก VITE_API_URL ถ้ามี (ไฟล์ .env)
@@ -8,20 +7,18 @@ import axios from 'axios';
   - ใส่ตัวแปร UPLOADED_SQL_PATH เพื่ออ้างอิงไฟล์ SQL ที่คุณอัปโหลด: /mnt/data/carechild_db.sql
     (ระบบจะเปลี่ยนเป็น URL ให้เมื่อคุณต้องการเรียกใช้งานไฟล์จริง)
 */
-
 export const UPLOADED_SQL_PATH = '/mnt/data/carechild_db.sql';
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:4000/api',
   timeout: 15000,
+  withCredentials: true   //
 });
-
 // ตั้ง token ถ้ามีเก็บใน localStorage ตอนโหลดหน้า
 const existingToken = localStorage.getItem('token');
 if (existingToken) {
   API.defaults.headers.common['Authorization'] = `Bearer ${existingToken}`;
 }
-
 export function setAuthToken(token) {
   if (token) {
     API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -31,7 +28,6 @@ export function setAuthToken(token) {
     localStorage.removeItem('token');
   }
 }
-
 // Optional: response interceptor to centralize error handling
 API.interceptors.response.use(
   (response) => response,

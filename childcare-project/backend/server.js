@@ -5,10 +5,14 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static("uploads"));
 
 // Ensure upload dir exists
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
@@ -44,9 +48,11 @@ const adminUsersRoutes     = safeRequireRoute('./routes/admin.users.routes');
 const childrenClassRoutes  = safeRequireRoute('./routes/children.class.routes');
 const menusRoutes = safeRequireRoute('./routes/menus.routes');
 const dailyMenuRoutes = safeRequireRoute('./routes/daily.menu.routes');
+const centersRoutes = require("./routes/centers.routes");
 
 // Register routes — no duplicates, no override
 if (authRoutes)           app.use('/api/auth', authRoutes);
+if (centersRoutes)       app.use('/api/centers', centersRoutes);
 if (childrenRoutes)       app.use('/api/children', childrenRoutes);
 if (childrenClassRoutes)  app.use('/api/children/class', childrenClassRoutes); // <-- แยก path
 if (announcementsRoutes)  app.use('/api/announcements', announcementsRoutes);

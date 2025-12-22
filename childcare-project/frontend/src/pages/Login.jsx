@@ -19,7 +19,15 @@ export default function Login({ setUser }) {
       localStorage.setItem("user", JSON.stringify(user));
       setUser && setUser(user);
 
-      navigate("/");
+      // redirect ตามสิทธิ์
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else if (user.role === "teacher") {
+        navigate("/teacher/children");
+      } else {
+        navigate("/");
+      }
+
     } catch (err) {
       alert(err?.response?.data?.error || "เข้าสู่ระบบไม่สำเร็จ");
     } finally {
@@ -35,10 +43,7 @@ export default function Login({ setUser }) {
         background: "linear-gradient(135deg, #cceeff, #e8fff2)"
       }}
     >
-      <div
-        className="card shadow-lg"
-        style={{ width: 380, borderRadius: 18 }}
-      >
+      <div className="card shadow-lg" style={{ width: 380, borderRadius: 18 }}>
         <div className="card-body p-4">
           <h4 className="text-center mb-4 text-primary">
             เข้าสู่ระบบ
@@ -68,10 +73,7 @@ export default function Login({ setUser }) {
               />
             </div>
 
-            <button
-              className="btn btn-primary w-100"
-              disabled={loading}
-            >
+            <button className="btn btn-primary w-100" disabled={loading}>
               {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
             </button>
           </form>

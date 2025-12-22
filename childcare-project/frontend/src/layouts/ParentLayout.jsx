@@ -1,21 +1,25 @@
-import React from 'react';
-import NavBar from '../components/NavBar';
+import { Navigate, useLocation } from "react-router-dom";
 
-export default function ParentLayout({ children }) {
-  return (
-    <>
-      <NavBar />
-      <div className="container mt-3">
-        <div className="row">
-          <div className="col-md-3">
-            <div className="list-group">
-              <a className="list-group-item list-group-item-action" href="/enroll">สมัครเรียน</a>
-              <a className="list-group-item list-group-item-action" href="/my-children">ข้อมูลบุตรหลาน</a>
-            </div>
-          </div>
-          <div className="col-md-9">{children}</div>
-        </div>
-      </div>
-    </>
-  );
+export default function ProtectedRoute({ children, role }) {
+  const location = useLocation();
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  // ยังไม่ login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // มี role กำหนด และ role ไม่ตรง
+  if (role && user.role !== role) {
+    // ถ้า admin แต่เข้า teacher
+    if (user.role === "admin") return <Navigate to="/admin" replace />;
+
+    // ถ้า teacher
+    if (user.role === "teacher") return <Navigate to="/teacher/children" replace />;
+
+    // user ทั่วไป
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 }

@@ -77,7 +77,7 @@ export default function NavBar() {
 
             {user && role === 'teacher' && (
               <>
-                <li className="nav-item"><Link className="nav-link" to="/teacher/enrollments">การสมัครเรียน</Link></li>
+                
                 <li className="nav-item"><Link className="nav-link" to="/teacher/children">ข้อมูลเด็ก</Link></li>
 
                 <li className="nav-item dropdown">
@@ -91,7 +91,7 @@ export default function NavBar() {
                                         <li><Link className="dropdown-item" to="/teacher/brushings">บันทึกแปรงฟัน</Link></li>
                                         <li><Link className="dropdown-item" to="/teacher/milk">บันทึกดื่มนม</Link></li>
                                         <li><Link className="dropdown-item" to="/teacher/lunch-eating">บันทึกการรับประทานอาหารกลางวัน</Link></li>
-                                        <li><Link className="dropdown-item" to="/teacher/assessment">ประเมินคุณลักษณะ</Link></li>
+                                        <li><Link className="dropdown-item" to="/teacher/evaluation/desired-traits">ประเมินคุณลักษณะ</Link></li>
                     <li><hr className="dropdown-divider" /></li>
                     <li><button className="dropdown-item text-danger" onClick={handleLogout}>ออกจากระบบ</button></li>
                   </ul>
